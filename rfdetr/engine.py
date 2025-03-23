@@ -23,8 +23,10 @@ import rfdetr.util.misc as utils
 from rfdetr.datasets.coco_eval import CocoEvaluator
 try:
     from torch.amp import autocast, GradScaler
+    DEPRECATED_AMP = False
 except ImportError:
     from torch.cuda.amp import autocast, GradScaler
+    DEPRECATED_AMP = True
 import torch.nn as nn
 import argparse
 from typing import DefaultDict, List, Callable
@@ -61,7 +63,10 @@ def train_one_epoch(
     print("Total batch size: ", batch_size * utils.get_world_size())
 
     # Add gradient scaler for AMP
-    scaler = GradScaler(enabled=args.amp)
+    if DEPRECATED_AMP:
+        scaler = GradScaler(enabled=args.amp)
+    else:
+        scaler = GradScaler(device_type='cuda', enabled=args.amp)
 
     optimizer.zero_grad()
     assert batch_size % args.grad_accum_steps == 0
@@ -99,7 +104,11 @@ def train_one_epoch(
             new_samples = new_samples.to(device)
             new_targets = [{k: v.to(device) for k, v in t.items()} for t in targets[start_idx:final_idx]]
 
-            with autocast(enabled=args.amp, dtype=torch.bfloat16):
+            if DEPRECATED_AMP:
+                autocast_args = {'enabled': args.amp, 'dtype': torch.bfloat16}
+            else:
+                autocast_args = {'device_type': 'cuda', 'enabled': args.amp, 'dtype': torch.bfloat16}
+            with autocast(**autocast_args):
                 outputs = model(new_samples, new_targets)
                 loss_dict = criterion(outputs, new_targets)
                 weight_dict = criterion.weight_dict
@@ -176,7 +185,11 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, arg
             samples.tensors = samples.tensors.half()
 
         # Add autocast for evaluation
-        with autocast('cuda', enabled=args.amp, dtype=torch.bfloat16):
+        if DEPRECATED_AMP:
+            autocast_args = {'enabled': args.amp, 'dtype': torch.bfloat16}
+        else:
+            autocast_args = {'device': 'cuda', 'enabled': args.amp, 'dtype': torch.bfloat16}
+        with autocast(**autocast_args):
             outputs = model(samples)
 
         if args.fp16_eval:
