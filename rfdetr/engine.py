@@ -66,7 +66,7 @@ def train_one_epoch(
     if DEPRECATED_AMP:
         scaler = GradScaler(enabled=args.amp)
     else:
-        scaler = GradScaler(device_type='cuda', enabled=args.amp)
+        scaler = GradScaler('cuda', enabled=args.amp)
 
     optimizer.zero_grad()
     assert batch_size % args.grad_accum_steps == 0
