@@ -21,7 +21,10 @@ from typing import Iterable
 import torch
 import rfdetr.util.misc as utils
 from rfdetr.datasets.coco_eval import CocoEvaluator
-from torch.cuda.amp import autocast, GradScaler
+try:
+    from torch.amp import autocast, GradScaler
+except ImportError:
+    from torch.cuda.amp import autocast, GradScaler
 import torch.nn as nn
 import argparse
 from typing import DefaultDict, List, Callable
@@ -173,7 +176,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, arg
             samples.tensors = samples.tensors.half()
 
         # Add autocast for evaluation
-        with autocast(enabled=args.amp, dtype=torch.bfloat16):
+        with autocast('cuda', enabled=args.amp, dtype=torch.bfloat16):
             outputs = model(samples)
 
         if args.fp16_eval:
