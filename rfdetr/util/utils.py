@@ -22,9 +22,10 @@ class ModelEma(torch.nn.Module):
 
     def _get_decay(self):
         if self.tau == 0:
-            return self.decay
+            decay = self.decay
         else:
-            return self.decay * (1 - math.exp(-self.updates / self.tau))
+            decay = self.decay * (1 - math.exp(-self.updates / self.tau))
+        return decay
 
     def _update(self, model, update_fn):
         with torch.no_grad():
@@ -35,7 +36,8 @@ class ModelEma(torch.nn.Module):
                 ema_v.copy_(update_fn(ema_v, model_v))
 
     def update(self, model):
-        self._update(model, update_fn=lambda e, m: self.decay * e + (1. - self.decay) * m)
+        decay = self._get_decay()
+        self._update(model, update_fn=lambda e, m: decay * e + (1. - decay) * m)
         self.updates += 1
 
     def set(self, model):
