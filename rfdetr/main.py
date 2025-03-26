@@ -138,7 +138,7 @@ class Model:
         self.model.reinitialize_detection_head(num_classes)
 
     def train(self, callbacks: DefaultDict[str, List[Callable]], **kwargs):
-        currently_supported_callbacks = ["on_fit_epoch_end", "on_train_batch_start"]
+        currently_supported_callbacks = ["on_fit_epoch_end", "on_train_batch_start", "on_train_end"]
         for key in callbacks.keys():
             if key not in currently_supported_callbacks:
                 raise ValueError(
@@ -428,6 +428,9 @@ class Model:
         if best_is_ema:
             self.model = self.ema_m.module
         self.model.eval()
+
+        for callback in callbacks["on_train_end"]:
+            callback()
     
     def export(self, output_dir="output", infer_dir=None, simplify=False,  backbone_only=False, opset_version=17, verbose=True, force=False, shape=None, batch_size=1, **kwargs):
         """Export the trained model to ONNX format"""

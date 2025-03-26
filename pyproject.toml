@@ -60,6 +60,7 @@ dependencies = [
     "rf100vl",
     "pydantic",
     "supervision",
+    "matplotlib",
 
 ]
 

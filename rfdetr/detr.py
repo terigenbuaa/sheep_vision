@@ -1,17 +1,18 @@
-import os
 import json
+import os
+from collections import defaultdict
+from logging import getLogger
+from typing import Union
+
+import numpy as np
+import supervision as sv
+import torch
+import torchvision.transforms.functional as F
+from PIL import Image
 
 from rfdetr.config import RFDETRBaseConfig, RFDETRLargeConfig, TrainConfig, ModelConfig
 from rfdetr.main import Model, download_pretrain_weights
-from functools import partial
-from logging import getLogger
-import torch
-import torchvision.transforms.functional as F
-from typing import Union
-from PIL import Image
-import numpy as np
-from collections import defaultdict
-import supervision as sv
+from rfdetr.util.metrics import MetricsPlotSink
 
 logger = getLogger(__name__)
 class RFDETR:
@@ -60,9 +61,11 @@ class RFDETR:
             if k in kwargs:
                 kwargs.pop(k)
         
-
         all_kwargs = {**model_config, **train_config, **kwargs, "num_classes": num_classes}
-        
+
+        metrics_plot_sink = MetricsPlotSink(output_dir=config.output_dir)
+        self.callbacks["on_fit_epoch_end"].append(metrics_plot_sink.update)
+        self.callbacks["on_train_end"].append(metrics_plot_sink.save)
 
         self.model.train(
             **all_kwargs,
