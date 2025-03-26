@@ -33,6 +33,14 @@ from typing import DefaultDict, List, Callable
 from rfdetr.util.misc import NestedTensor
 from rfdetr.util.misc import nested_tensor_from_tensor_list
 
+
+def get_autocast_args(args):
+    if DEPRECATED_AMP:
+        return {'enabled': args.amp, 'dtype': torch.bfloat16}
+    else:
+        return {'device_type': 'cuda', 'enabled': args.amp, 'dtype': torch.bfloat16}
+
+
 def train_one_epoch(
     model: torch.nn.Module,
     criterion: torch.nn.Module,
@@ -104,11 +112,7 @@ def train_one_epoch(
             new_samples = new_samples.to(device)
             new_targets = [{k: v.to(device) for k, v in t.items()} for t in targets[start_idx:final_idx]]
 
-            if DEPRECATED_AMP:
-                autocast_args = {'enabled': args.amp, 'dtype': torch.bfloat16}
-            else:
-                autocast_args = {'device_type': 'cuda', 'enabled': args.amp, 'dtype': torch.bfloat16}
-            with autocast(**autocast_args):
+            with autocast(**get_autocast_args(args)):
                 outputs = model(new_samples, new_targets)
                 loss_dict = criterion(outputs, new_targets)
                 weight_dict = criterion.weight_dict
@@ -185,11 +189,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, arg
             samples.tensors = samples.tensors.half()
 
         # Add autocast for evaluation
-        if DEPRECATED_AMP:
-            autocast_args = {'enabled': args.amp, 'dtype': torch.bfloat16}
-        else:
-            autocast_args = {'device': 'cuda', 'enabled': args.amp, 'dtype': torch.bfloat16}
-        with autocast(**autocast_args):
+        with autocast(**get_autocast_args(args)):
             outputs = model(samples)
 
         if args.fp16_eval:
