@@ -20,15 +20,18 @@ RF-DETR is the first real-time model to exceed 60 AP on the [Microsoft COCO benc
 
 We validated the performance of RF-DETR on both Microsoft COCO and the RF100-VL benchmarks.
 
-![rf-detr-coco-rf100-vl-8](https://media.roboflow.com/rf-detr/charts.png)
+![rf-detr-coco-6](https://github.com/user-attachments/assets/3a446698-c14c-40d1-b24b-d7e33c84da81)
 
-| Model            | params<br><sup>(M) | mAP<sup>COCO val<br>@0.50:0.95 | mAP<sup>RF100-VL<br>Average @0.50 | Total Latency<br><sup>T4 bs=1<br>(ms) |
-|------------------|--------------------|--------------------------------|-----------------------------------|---------------------------------------|
-| D-FINE-M         | 19.3               | <ins>55.1</ins>                | N/A                               | 6.3                                   |
-| LW-DETR-M        | 28.2               | 52.5                           | 84.0                              | 6.0                                   |
-| YOLO11m          | 20.0               | 51.5                           | 84.9                              | <ins>5.7</ins>                        |
-| YOLOv8m          | 28.9               | 50.6                           | 85.0                              | 6.3                                   |
-| RF-DETR-B        | 29.0               | 53.3                           | <ins>86.7</ins>                   | 6.0                                   |
+![rf100-vl-map50](https://github.com/user-attachments/assets/e61a7ba4-5294-40a9-8cd7-4fc924639924)
+
+
+| Model            | params<br><sup>(M) | mAP<sup>COCO val<br>@0.50:0.95 | mAP<sup>RF100-VL<br>Average @0.50 | mAP<sup>RF100-VL<br>Average @0.50:95 | Total Latency<br><sup>T4 bs=1<br>(ms) |
+|------------------|--------------------|--------------------------------|-----------------------------------|---------------------------------------|---------------------------------------|
+| D-FINE-M         | 19.3               | <ins>55.1</ins>                | N/A                               | N/A                                   | 6.3                                   |
+| LW-DETR-M        | 28.2               | 52.5                           | 84.0                              | 57.5                                  | 6.0                                   |
+| YOLO11m          | 20.0               | 51.5                           | 84.9                              | 59.7                                  | <ins>5.7</ins>                        |
+| YOLOv8m          | 28.9               | 50.6                           | 85.0                              | 59.8                                  | 6.3                                   |
+| RF-DETR-B        | 29.0               | 53.3                           | <ins>86.7</ins>                   | <ins>60.3</ins>                       | 6.0                                   |
 
 
 <details>
