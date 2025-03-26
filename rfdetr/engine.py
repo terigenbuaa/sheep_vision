@@ -19,19 +19,19 @@ import sys
 from typing import Iterable
 
 import torch
+
 import rfdetr.util.misc as utils
 from rfdetr.datasets.coco_eval import CocoEvaluator
+
 try:
     from torch.amp import autocast, GradScaler
     DEPRECATED_AMP = False
 except ImportError:
     from torch.cuda.amp import autocast, GradScaler
     DEPRECATED_AMP = True
-import torch.nn as nn
-import argparse
 from typing import DefaultDict, List, Callable
 from rfdetr.util.misc import NestedTensor
-from rfdetr.util.misc import nested_tensor_from_tensor_list
+
 
 
 def get_autocast_args(args):
