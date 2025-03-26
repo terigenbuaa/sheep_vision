@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+plt.ioff()
 
 PLOT_FILE_NAME = "metrics_plot.png"
 
@@ -76,3 +77,5 @@ class MetricsPlotSink:
 
         plt.tight_layout()
         plt.savefig(f"{self.output_dir}/{PLOT_FILE_NAME}")
+        plt.close(fig)
+        print(f"Results saved to {self.output_dir}/{PLOT_FILE_NAME}")
