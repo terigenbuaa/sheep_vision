@@ -3,7 +3,7 @@ import numpy as np
 
 try:
     from torch.utils.tensorboard import SummaryWriter
-except AttributeError:
+except ModuleNotFoundError:
     SummaryWriter = None
 
 plt.ioff()
