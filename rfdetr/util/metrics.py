@@ -118,7 +118,7 @@ class MetricsTensorBoardSink:
     """
 
     def __init__(self, output_dir: str):
-        print('TEST', output_dir)
+        print('MetricsTensorBoardSink.__init__', output_dir)
         self.writer = SummaryWriter(log_dir=output_dir)
 
     def update(self, values: dict):
