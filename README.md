@@ -253,22 +253,23 @@ During training, two model checkpoints (the regular weights and an EMA-based set
 <details>
 <summary>Launch TensorBoard</summary>
 
-To use TensorBoard locally, navigate to your project directory and run:
+- To use TensorBoard locally, navigate to your project directory and run:
 
-```bash
-tensorboard --logdir <OUTPUT_DIR>
-```
+    ```bash
+    tensorboard --logdir <OUTPUT_DIR>
+    ```
 
-Then open http://localhost:6006/ in your browser to view your logs.
+    Then open `http://localhost:6006/` in your browser to view your logs.
 
-To use TensorBoard in Google Colab run:
+- To use TensorBoard in Google Colab run:
 
-```bash
-%load_ext tensorboard
-%tensorboard --logdir <OUTPUT_DIR>
-```
+    ```bash
+    %load_ext tensorboard
+    %tensorboard --logdir <OUTPUT_DIR>
+    ```
 
-This will start a TensorBoard session in the Colab environment.
+    This will start a TensorBoard session in the Google Colab environment.
+  
 </details>
 
 ### Load and run fine-tuned model
