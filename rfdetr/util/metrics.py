@@ -1,3 +1,5 @@
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -177,12 +179,12 @@ class MetricsWandBSink:
 
     Args:
         output_dir (str): Directory where W&B logs will be written locally.
-        project_name (str, optional): W&B project name. If None, W&B will generate a name based on the git repo name.
+        project_name (str, optional): Associate this training run with a W&B project. If None, W&B will generate a name based on the git repo name.
         run_name (str, optional): W&B run name. If None, W&B will generate a random name.
-        config (dict, optional): Input parameters, like hyperparameters or data preprocessing settings for the run.
+        config (dict, optional): Input parameters, like hyperparameters or data preprocessing settings for the run for later comparison.
     """
 
-    def __init__(self, output_dir: str, project_name: str = None, run_name: str = None, config: dict = None):
+    def __init__(self, output_dir: str, project_name: Optional[str] = None, run_name: Optional[str] = None, config: Optional[dict] = None):
         self.output_dir = output_dir
         if wandb:
             self.run = wandb.init(
@@ -194,7 +196,7 @@ class MetricsWandBSink:
             print(f"Weights & Biases initialized. View logs at {wandb.run.url}")
         else:
             self.run = None
-            print("Unable to initialize Weights & Biases. Please install with 'pip install wandb' and log in.")
+            print("Unable to initialize Weights & Biases. Please install with 'pip install wandb' and 'wandb login'.")
 
     def update(self, values: dict):
         if not wandb or not self.run:
