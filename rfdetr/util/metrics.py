@@ -158,5 +158,7 @@ class MetricsTensorBoardSink:
             if ema_ar50_90 is not None:
                 self.writer.add_scalar("COCO/EMA/AR50_90", ema_ar50_90, epoch)
 
+        self.writer.flush()
+
     def close(self):
         self.writer.close()
