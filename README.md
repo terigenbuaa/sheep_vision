@@ -56,6 +56,18 @@ Pip install the `rfdetr` package in a [**Python>=3.9**](https://www.python.org/)
 pip install rfdetr
 ```
 
+<details>
+<summary>From source</summary>
+
+By installing RF-DETR from source, you can explore the most recent features and enhancements that have not yet been officially released. Please note that these updates are still in development and may not be as stable as the latest published release.
+
+```bash
+pip install git+https://github.com/roboflow/rf-detr.git
+```
+
+</details>
+
+
 ## Inference
 
 RF-DETR comes out of the box with checkpoints pre-trained on the Microsoft COCO dataset.
@@ -212,7 +224,7 @@ from rfdetr import RFDETRBase
 
 model = RFDETRBase()
 
-model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_steps=4, lr=1e-4)
+model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_steps=4, lr=1e-4, output_dir=<OUTPUT_PATH>)
 ```
 
 ### Batch size
@@ -235,6 +247,32 @@ Replace `8` in the `--nproc_per_node argument` with the number of GPUs you want 
 ### Result checkpoints
 
 During training, two model checkpoints (the regular weights and an EMA-based set of weights) will be saved in the specified output directory. The EMA (Exponential Moving Average) file is a smoothed version of the model’s weights over time, often yielding better stability and generalization.
+
+### Logging with TensorBoard
+
+[TensorBoard](https://www.tensorflow.org/tensorboard) is a powerful toolkit that helps you visualize and track training metrics. With TensorBoard set up, you can train your model and keep an eye on the logs to monitor performance, compare experiments, and optimize model training.
+
+<details>
+<summary>Launch TensorBoard</summary>
+
+- To use TensorBoard locally, navigate to your project directory and run:
+
+    ```bash
+    tensorboard --logdir <OUTPUT_DIR>
+    ```
+
+    Then open `http://localhost:6006/` in your browser to view your logs.
+
+- To use TensorBoard in Google Colab run:
+
+    ```bash
+    %load_ext tensorboard
+    %tensorboard --logdir <OUTPUT_DIR>
+    ```
+
+    This will start a TensorBoard session in the Google Colab environment.
+  
+</details>
 
 ### Load and run fine-tuned model
 

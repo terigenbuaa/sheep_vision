@@ -62,12 +62,14 @@ dependencies = [
     "pydantic",
     "supervision",
     "matplotlib",
-
 ]
 
 [project.optional-dependencies]
 onnxruntime = [
     "onnxruntime"
+]
+logging = [
+    "tensorboard>=2.13.0"
 ]
 
 [project.urls]
