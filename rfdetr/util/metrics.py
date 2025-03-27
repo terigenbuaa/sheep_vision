@@ -1,8 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from torch.utils.tensorboard import SummaryWriter
 
-
+try:
+    from torch.utils.tensorboard import SummaryWriter
+except AttributeError:
+    SummaryWriter = None
 
 plt.ioff()
 
@@ -109,30 +111,29 @@ class MetricsTensorBoardSink:
     """
     The MetricsTensorBoardSink class logs training metrics to TensorBoard.
 
-    It extracts metrics similar to MetricsPlotSink and logs them every epoch.
-    It uses proper tensorboard practices by using descriptive tags and closing
-    the writer when logging is complete.
-
     Args:
         output_dir (str): Directory where TensorBoard logs will be written.
     """
 
     def __init__(self, output_dir: str):
-        self.writer = SummaryWriter(log_dir=output_dir)
+        if SummaryWriter:
+            self.writer = SummaryWriter(log_dir=output_dir)
+            print(f"To monitor logs, use 'tensorboard --logdir {output_dir}' and open http://localhost:6006/ in brawser.")
+        else:
+            self.writer = None
+            print("Unable to initialize TensorBoard. Logging is turned off for this session.")
 
     def update(self, values: dict):
-        # Expect each update call to include an 'epoch' key.
-        epoch = values.get('epoch', None)
-        if epoch is None:
-            raise ValueError("Missing 'epoch' key in metrics update")
+        if not self.writer:
+            return
 
-        # Log loss metrics
+        epoch = values['epoch']
+
         if 'train_loss' in values:
             self.writer.add_scalar("Loss/Train", values['train_loss'], epoch)
         if 'test_loss' in values:
             self.writer.add_scalar("Loss/Test", values['test_loss'], epoch)
 
-        # Log base model coco eval metrics if available.
         if 'test_coco_eval_bbox' in values:
             coco_eval = values['test_coco_eval_bbox']
             ap50_90 = safe_index(coco_eval, 0)
@@ -145,7 +146,6 @@ class MetricsTensorBoardSink:
             if ar50_90 is not None:
                 self.writer.add_scalar("COCO/Base/AR50_90", ar50_90, epoch)
 
-        # Log EMA model coco eval metrics if available.
         if 'ema_test_coco_eval_bbox' in values:
             ema_coco_eval = values['ema_test_coco_eval_bbox']
             ema_ap50_90 = safe_index(ema_coco_eval, 0)
@@ -161,4 +161,7 @@ class MetricsTensorBoardSink:
         self.writer.flush()
 
     def close(self):
+        if not self.writer:
+            return
+        
         self.writer.close()
