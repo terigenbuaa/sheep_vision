@@ -140,11 +140,11 @@ class MetricsTensorBoardSink:
             ap50 = safe_index(coco_eval, 1)
             ar50_90 = safe_index(coco_eval, 6)
             if ap50_90 is not None:
-                self.writer.add_scalar("COCO/Base/AP50_90", ap50_90, epoch)
+                self.writer.add_scalar("Metrics/Base/AP50_90", ap50_90, epoch)
             if ap50 is not None:
-                self.writer.add_scalar("COCO/Base/AP50", ap50, epoch)
+                self.writer.add_scalar("Metrics/Base/AP50", ap50, epoch)
             if ar50_90 is not None:
-                self.writer.add_scalar("COCO/Base/AR50_90", ar50_90, epoch)
+                self.writer.add_scalar("Metrics/Base/AR50_90", ar50_90, epoch)
 
         if 'ema_test_coco_eval_bbox' in values:
             ema_coco_eval = values['ema_test_coco_eval_bbox']
@@ -152,11 +152,11 @@ class MetricsTensorBoardSink:
             ema_ap50 = safe_index(ema_coco_eval, 1)
             ema_ar50_90 = safe_index(ema_coco_eval, 6)
             if ema_ap50_90 is not None:
-                self.writer.add_scalar("COCO/EMA/AP50_90", ema_ap50_90, epoch)
+                self.writer.add_scalar("Metrics/EMA/AP50_90", ema_ap50_90, epoch)
             if ema_ap50 is not None:
-                self.writer.add_scalar("COCO/EMA/AP50", ema_ap50, epoch)
+                self.writer.add_scalar("Metrics/EMA/AP50", ema_ap50, epoch)
             if ema_ar50_90 is not None:
-                self.writer.add_scalar("COCO/EMA/AR50_90", ema_ar50_90, epoch)
+                self.writer.add_scalar("Metrics/EMA/AR50_90", ema_ar50_90, epoch)
 
         self.writer.flush()
 
