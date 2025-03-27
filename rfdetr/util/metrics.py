@@ -100,9 +100,9 @@ class MetricsPlotSink:
             axes[1][1].grid(True)
 
         # Make subplots square
-        for row in axes:
-            for ax in row:
-                ax.set_aspect('equal', adjustable='box')
+        # for row in axes:
+        #     for ax in row:
+        #         ax.set_aspect('equal', adjustable='box')
 
         plt.tight_layout()
         plt.savefig(f"{self.output_dir}/{PLOT_FILE_NAME}")
@@ -123,6 +123,7 @@ class MetricsTensorBoardSink:
     """
 
     def __init__(self, output_dir: str):
+        print('TEST', output_dir)
         self.writer = SummaryWriter(log_dir=output_dir)
 
     def update(self, values: dict):
