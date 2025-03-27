@@ -12,7 +12,7 @@ from PIL import Image
 
 from rfdetr.config import RFDETRBaseConfig, RFDETRLargeConfig, TrainConfig, ModelConfig
 from rfdetr.main import Model, download_pretrain_weights
-from rfdetr.util.metrics import MetricsPlotSink
+from rfdetr.util.metrics import MetricsPlotSink, MetricsTensorBoardSink
 
 logger = getLogger(__name__)
 class RFDETR:
@@ -66,6 +66,10 @@ class RFDETR:
         metrics_plot_sink = MetricsPlotSink(output_dir=config.output_dir)
         self.callbacks["on_fit_epoch_end"].append(metrics_plot_sink.update)
         self.callbacks["on_train_end"].append(metrics_plot_sink.save)
+
+        metrics_tensor_board_sink = MetricsTensorBoardSink(output_dir=config.output_dir)
+        self.callbacks["on_fit_epoch_end"].append(metrics_tensor_board_sink.update)
+        self.callbacks["on_train_end"].append(metrics_tensor_board_sink.close)
 
         self.model.train(
             **all_kwargs,
