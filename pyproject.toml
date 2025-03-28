@@ -68,7 +68,7 @@ dependencies = [
 onnxruntime = [
     "onnxruntime"
 ]
-logging = [
+metrics = [
     "tensorboard>=2.13.0"
 ]
 
