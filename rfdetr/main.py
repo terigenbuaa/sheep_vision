@@ -133,9 +133,18 @@ class Model:
             self.model.backbone[0].encoder = get_peft_model(self.model.backbone[0].encoder, lora_config)
         self.model = self.model.to(self.device)
         self.criterion, self.postprocessors = build_criterion_and_postprocessors(args)
+        self.stop_early = False
+
+    def request_early_stop(self):
+        self.stop_early = True
+        print("Early stopping requested, will complete current epoch and stop")
     
     def reinitialize_detection_head(self, num_classes):
         self.model.reinitialize_detection_head(num_classes)
+
+    def request_early_stop(self):
+        self.stop_early = True
+        print("Early stopping requested, will complete current epoch and stop")
 
     def train(self, callbacks: DefaultDict[str, List[Callable]], **kwargs):
         currently_supported_callbacks = ["on_fit_epoch_end", "on_train_batch_start", "on_train_end"]
@@ -397,6 +406,10 @@ class Model:
             
             for callback in callbacks["on_fit_epoch_end"]:
                 callback(log_stats)
+
+            if self.stop_early:
+                print(f"Early stopping requested, stopping at epoch {epoch}")
+                break
 
         best_is_ema = best_map_ema_5095 > best_map_5095
         if best_is_ema:
