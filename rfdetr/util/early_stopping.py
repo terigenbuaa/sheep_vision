@@ -35,6 +35,8 @@ class EarlyStoppingCallback:
             return
         
         # Check if current mAP is better than best so far (by at least min_delta)
+        print(f"DIFF: {current_map - self.best_map}")
+        print(f"MIN_DELTA: {self.min_delta}")
         if current_map > self.best_map + self.min_delta:
             # We have an improvement
             self.best_map = current_map
