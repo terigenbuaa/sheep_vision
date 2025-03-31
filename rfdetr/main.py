@@ -159,6 +159,17 @@ class Model:
         print(args)
         device = torch.device(args.device)
 
+        # Initialize early stopping if enabled
+        if args.early_stopping:
+            from rfdetr.util.early_stopping import EarlyStoppingCallback
+            early_stopping_callback = EarlyStoppingCallback(
+                patience=args.early_stopping_patience,
+                min_delta=args.early_stopping_min_delta,
+                use_ema=args.early_stopping_use_ema
+            )
+            early_stopping_callback.set_model(self)
+            callbacks["on_fit_epoch_end"].append(early_stopping_callback.update)
+        
         # fix the seed for reproducibility
         seed = args.seed + utils.get_rank()
         torch.manual_seed(seed)
@@ -752,6 +763,15 @@ def get_args_parser():
     )
     parser.add_argument('--lr_min_factor', default=0.0, type=float, 
         help='Minimum learning rate factor (as a fraction of initial lr) at the end of cosine annealing')
+    # Early stopping parameters
+    parser.add_argument('--early_stopping', action='store_true',
+                        help='Enable early stopping based on mAP improvement')
+    parser.add_argument('--early_stopping_patience', default=5, type=int,
+                        help='Number of epochs with no improvement after which training will be stopped')
+    parser.add_argument('--early_stopping_min_delta', default=0.001, type=float,
+                        help='Minimum change in mAP to qualify as an improvement')
+    parser.add_argument('--early_stopping_use_ema', action='store_true',
+                        help='Use EMA model metrics for early stopping')
     # subparsers
     subparsers = parser.add_subparsers(title='sub-commands', dest='subcommand',
         description='valid subcommands', help='additional help')
@@ -882,6 +902,11 @@ def populate_args(
     warmup_epochs=1,
     lr_scheduler='step',
     lr_min_factor=0.0,
+    # Early stopping parameters
+    early_stopping=False,
+    early_stopping_patience=5,
+    early_stopping_min_delta=0.001,
+    early_stopping_use_ema=False,
     # Additional
     subcommand=None,
     **extra_kwargs  # To handle any unexpected arguments
@@ -976,6 +1001,10 @@ def populate_args(
         warmup_epochs=warmup_epochs,
         lr_scheduler=lr_scheduler,
         lr_min_factor=lr_min_factor,
+        early_stopping=early_stopping,
+        early_stopping_patience=early_stopping_patience,
+        early_stopping_min_delta=early_stopping_min_delta,
+        early_stopping_use_ema=early_stopping_use_ema,
         **extra_kwargs
     )
     return args
