@@ -136,10 +136,6 @@ class Model:
         self.model = self.model.to(self.device)
         self.criterion, self.postprocessors = build_criterion_and_postprocessors(args)
         self.stop_early = False
-
-    def request_early_stop(self):
-        self.stop_early = True
-        print("Early stopping requested, will complete current epoch and stop")
     
     def reinitialize_detection_head(self, num_classes):
         self.model.reinitialize_detection_head(num_classes)
