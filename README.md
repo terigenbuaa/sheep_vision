@@ -124,7 +124,7 @@ def callback(frame, index):
     annotated_frame = sv.LabelAnnotator().annotate(annotated_frame, detections, labels)
     return annotated_frame
 
-process_video(
+sv.process_video(
     source_path=<SOURCE_VIDEO_PATH>,
     target_path=<TARGET_VIDEO_PATH>,
     callback=callback
