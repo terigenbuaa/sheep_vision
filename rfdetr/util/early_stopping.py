@@ -25,33 +25,49 @@ class EarlyStoppingCallback:
         
     def update(self, log_stats):
         """Update early stopping state based on epoch validation metrics"""
-        # Get the mAP value from the log stats
-        if self.use_ema and 'ema_test_coco_eval_bbox' in log_stats:
-            current_map = log_stats['ema_test_coco_eval_bbox'][0]
-        elif 'test_coco_eval_bbox' in log_stats:
-            current_map = log_stats['test_coco_eval_bbox'][0]
+        regular_map = None
+        ema_map = None
+        
+        if 'test_coco_eval_bbox' in log_stats:
+            regular_map = log_stats['test_coco_eval_bbox'][0]
+        
+        if 'ema_test_coco_eval_bbox' in log_stats:
+            ema_map = log_stats['ema_test_coco_eval_bbox'][0]
+        
+        current_map = None
+        if regular_map is not None and ema_map is not None:
+            if self.use_ema:
+                current_map = ema_map
+                metric_source = "EMA"
+            else:
+                current_map = max(regular_map, ema_map)
+                metric_source = "max(regular, EMA)"
+        elif ema_map is not None:
+            current_map = ema_map
+            metric_source = "EMA"
+        elif regular_map is not None:
+            current_map = regular_map
+            metric_source = "regular"
         else:
-            # No valid mAP metric found, skip early stopping check
+            if self.verbose:
+                print("Early stopping: No valid mAP metric found, skipping check")
             return
         
-        # Check if current mAP is better than best so far (by at least min_delta)
-        print(f"DIFF: {current_map - self.best_map}")
-        print(f"MIN_DELTA: {self.min_delta}")
+        if self.verbose:
+            print(f"Early stopping: Current mAP ({metric_source}): {current_map:.4f}, Best: {self.best_map:.4f}, Diff: {current_map - self.best_map:.4f}, Min delta: {self.min_delta}")
+        
         if current_map > self.best_map + self.min_delta:
-            # We have an improvement
             self.best_map = current_map
             self.counter = 0
             if self.verbose:
-                print(f"Early stopping: mAP improved to {current_map:.4f}")
+                print(f"Early stopping: mAP improved to {current_map:.4f} using {metric_source} metric")
         else:
-            # No improvement
             self.counter += 1
             if self.verbose:
                 print(f"Early stopping: No improvement in mAP for {self.counter} epochs (best: {self.best_map:.4f}, current: {current_map:.4f})")
             
-            # Check if early stopping criteria met
-            if self.counter >= self.patience:
-                print(f"Early stopping triggered: No improvement above {self.min_delta} threshold for {self.patience} epochs")
-                # Request model to stop early
+        if self.counter >= self.patience:
+            print(f"Early stopping triggered: No improvement above {self.min_delta} threshold for {self.patience} epochs")
+            if self.model:
                 if self.model:
                     self.model.request_early_stop()
