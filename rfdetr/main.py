@@ -29,21 +29,21 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, DistributedSampler
 
-from datasets import build_dataset, get_coco_api_from_dataset
-from engine import evaluate, train_one_epoch
-from models import build_model, build_criterion_and_postprocessors
-from util.drop_scheduler import drop_scheduler
-from util.get_param_dicts import get_param_dict
-import util.misc as utils
-from util.utils import ModelEma, BestMetricHolder, clean_state_dict
-from util.benchmark import benchmark
+from rfdetr.datasets import build_dataset, get_coco_api_from_dataset
+from rfdetr.engine import evaluate, train_one_epoch
+from rfdetr.models import build_model, build_criterion_and_postprocessors
+from rfdetr.util.drop_scheduler import drop_scheduler
+from rfdetr.util.get_param_dicts import get_param_dict
+import rfdetr.util.misc as utils
+from rfdetr.util.utils import ModelEma, BestMetricHolder, clean_state_dict
+from rfdetr.util.benchmark import benchmark
 from torch import nn
 import torch.nn.functional as F
 from peft import LoraConfig, get_peft_model
 from typing import DefaultDict, List, Callable
 from logging import getLogger
 import shutil
-from util.files import download_file
+from rfdetr.util.files import download_file
 import os
 if os.environ.get("USE_FILE_SYSTEM_SHARING", "0") == "1":
     import torch.multiprocessing
