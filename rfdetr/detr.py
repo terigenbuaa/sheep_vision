@@ -71,6 +71,16 @@ class RFDETR:
         self.callbacks["on_fit_epoch_end"].append(metrics_tensor_board_sink.update)
         self.callbacks["on_train_end"].append(metrics_tensor_board_sink.close)
 
+        if config.early_stopping:
+            from rfdetr.util.early_stopping import EarlyStoppingCallback
+            early_stopping_callback = EarlyStoppingCallback(
+                model=self.model,
+                patience=config.early_stopping_patience,
+                min_delta=config.early_stopping_min_delta,
+                use_ema=config.early_stopping_use_ema
+            )
+            self.callbacks["on_fit_epoch_end"].append(early_stopping_callback.update)
+
         self.model.train(
             **all_kwargs,
             callbacks=self.callbacks,
