@@ -903,7 +903,7 @@ def populate_args(
     lr_scheduler='step',
     lr_min_factor=0.0,
     # Early stopping parameters
-    early_stopping=False,
+    early_stopping=True,
     early_stopping_patience=5,
     early_stopping_min_delta=0.001,
     early_stopping_use_ema=False,
