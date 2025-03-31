@@ -45,8 +45,9 @@ from logging import getLogger
 import shutil
 from rfdetr.util.files import download_file
 import os
-import torch.multiprocessing
-torch.multiprocessing.set_sharing_strategy('file_system')
+if os.environ.get("USE_FILE_SYSTEM_SHARING", "0") == "1":
+    import torch.multiprocessing
+    torch.multiprocessing.set_sharing_strategy('file_system')
 
 logger = getLogger(__name__)
 
