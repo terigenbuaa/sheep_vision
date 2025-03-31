@@ -69,5 +69,4 @@ class EarlyStoppingCallback:
         if self.counter >= self.patience:
             print(f"Early stopping triggered: No improvement above {self.min_delta} threshold for {self.patience} epochs")
             if self.model:
-                if self.model:
-                    self.model.request_early_stop()
+                self.model.request_early_stop()
