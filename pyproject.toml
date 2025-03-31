@@ -72,6 +72,12 @@ metrics = [
     "tensorboard>=2.13.0"
 ]
 
+build = [
+    "twine>=5.1.1",
+    "wheel>=0.40",
+    "build>=0.10"
+]
+
 [project.urls]
 Homepage = "https://github.com/roboflow/rf-detr"
 
