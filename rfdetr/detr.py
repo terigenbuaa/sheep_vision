@@ -67,13 +67,20 @@ class RFDETR:
         self.callbacks["on_fit_epoch_end"].append(metrics_plot_sink.update)
         self.callbacks["on_train_end"].append(metrics_plot_sink.save)
 
-        metrics_tensor_board_sink = MetricsTensorBoardSink(output_dir=config.output_dir)
-        self.callbacks["on_fit_epoch_end"].append(metrics_tensor_board_sink.update)
-        self.callbacks["on_train_end"].append(metrics_tensor_board_sink.close)
+        if config.tensorboard:
+            metrics_tensor_board_sink = MetricsTensorBoardSink(output_dir=config.output_dir)
+            self.callbacks["on_fit_epoch_end"].append(metrics_tensor_board_sink.update)
+            self.callbacks["on_train_end"].append(metrics_tensor_board_sink.close)
 
-        metrics_wandb_sink = MetricsWandBSink(output_dir=config.output_dir, project_name = kwargs.get("project_name", None), run_name = kwargs.get("run_name", None), config = all_kwargs)
-        self.callbacks["on_fit_epoch_end"].append(metrics_wandb_sink.update)
-        self.callbacks["on_train_end"].append(metrics_wandb_sink.close)
+        if config.wandb:
+            metrics_wandb_sink = MetricsWandBSink(
+                output_dir=config.output_dir,
+                project=config.project,
+                run=config.run,
+                config=config.model_dump()
+            )
+            self.callbacks["on_fit_epoch_end"].append(metrics_wandb_sink.update)
+            self.callbacks["on_train_end"].append(metrics_wandb_sink.close)
 
         self.model.train(
             **all_kwargs,
