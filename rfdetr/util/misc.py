@@ -425,11 +425,7 @@ def save_on_master(obj, f, *args, **kwargs):
     Safely save objects, removing any callbacks that can't be pickled
     """
     if is_main_process():
-        if isinstance(obj, dict) and 'model' in obj:
-            torch.save({'model': obj['model']}, f, *args, **kwargs)
-        else:
-            raise ValueError("Invalid object type for saving")
-
+        torch.save(obj, f, *args, **kwargs)
 
 def init_distributed_mode(args):
     if 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:

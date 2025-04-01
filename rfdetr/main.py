@@ -892,6 +892,7 @@ def populate_args(
     early_stopping_patience=10,
     early_stopping_min_delta=0.001,
     early_stopping_use_ema=False,
+    gradient_checkpointing=False,
     # Additional
     subcommand=None,
     **extra_kwargs  # To handle any unexpected arguments
