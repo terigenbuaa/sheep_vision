@@ -990,6 +990,7 @@ def populate_args(
         early_stopping_patience=early_stopping_patience,
         early_stopping_min_delta=early_stopping_min_delta,
         early_stopping_use_ema=early_stopping_use_ema,
+        gradient_checkpointing=gradient_checkpointing,
         **extra_kwargs
     )
     return args

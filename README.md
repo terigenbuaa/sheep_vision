@@ -24,6 +24,9 @@ We validated the performance of RF-DETR on both Microsoft COCO and the RF100-VL 
 
 <details>
 <summary>RF100-VL benchmark results</summary>
+
+<br>
+    
 <img src="https://github.com/user-attachments/assets/e61a7ba4-5294-40a9-8cd7-4fc924639924" alt="rf100-vl-map50">
 </details>
 
@@ -58,6 +61,8 @@ pip install rfdetr
 
 <details>
 <summary>From source</summary>
+
+<br>
 
 By installing RF-DETR from source, you can explore the most recent features and enhancements that have not yet been officially released. Please note that these updates are still in development and may not be as stable as the latest published release.
 
@@ -103,6 +108,8 @@ sv.plot_image(annotated_image)
 <details>
 <summary>Video inference</summary>
 
+<br>
+
 ```python
 import supervision as sv
 from rfdetr import RFDETRBase
@@ -136,6 +143,8 @@ sv.process_video(
 <details>
 <summary>Webcam inference</summary>
 
+<br>
+
 ```python
 import cv2
 import supervision as sv
@@ -163,6 +172,48 @@ while True:
     annotated_frame = sv.LabelAnnotator().annotate(annotated_frame, detections, labels)
 
     cv2.imshow("Webcam", annotated_frame)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
+```
+
+</details>
+
+<details>
+<summary>RTSP stream inference</summary>
+
+<br>
+
+```python
+import cv2
+import supervision as sv
+from rfdetr import RFDETRBase
+from rfdetr.util.coco_classes import COCO_CLASSES
+
+model = RFDETRBase()
+
+cap = cv2.VideoCapture(<RTSP_STREAM_URL>)
+while True:
+    success, frame = cap.read()
+    if not success:
+        break
+
+    detections = model.predict(frame, threshold=0.5)
+    
+    labels = [
+        f"{COCO_CLASSES[class_id]} {confidence:.2f}"
+        for class_id, confidence
+        in zip(detections.class_id, detections.confidence)
+    ]
+
+    annotated_frame = frame.copy()
+    annotated_frame = sv.BoxAnnotator().annotate(annotated_frame, detections)
+    annotated_frame = sv.LabelAnnotator().annotate(annotated_frame, detections, labels)
+
+    cv2.imshow("RTSP Stream", annotated_frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
@@ -227,6 +278,106 @@ model = RFDETRBase()
 model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_steps=4, lr=1e-4, output_dir=<OUTPUT_PATH>)
 ```
 
+</details>
+
+<details>
+<summary>Parameters</summary>
+
+<br>
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>dataset_dir</code></td>
+      <td>Specifies the COCO-formatted dataset location with separate <code>train</code>, <code>valid</code>, and <code>test</code> folders, each containing its own <code>_annotations.coco.json</code>. Ensures the model can properly read and parse data.</td>
+    </tr>
+    <tr>
+      <td><code>output_dir</code></td>
+      <td>Directory where training artifacts (checkpoints, logs, etc.) are saved. Important for experiment tracking and resuming training.</td>
+    </tr>
+    <tr>
+      <td><code>epochs</code></td>
+      <td>Number of full passes over the dataset. Increasing this can improve performance but extends total training time.</td>
+    </tr>
+    <tr>
+      <td><code>batch_size</code></td>
+      <td>Number of samples processed per iteration. Higher values require more GPU memory but can speed up training. Must be balanced with <code>grad_accum_steps</code> to maintain the intended total batch size.</td>
+    </tr>
+    <tr>
+      <td><code>grad_accum_steps</code></td>
+      <td>Accumulates gradients over multiple mini-batches, effectively raising the total batch size without requiring as much memory at once. Helps train on smaller GPUs at the cost of slightly more time per update.</td>
+    </tr>
+    <tr>
+      <td><code>lr</code></td>
+      <td>Learning rate for the optimizer. Influences how quickly or cautiously the model adjusts its parameters.</td>
+    </tr>
+    <tr>
+      <td><code>resolution</code></td>
+      <td>Sets the input image dimensions. Higher values can improve accuracy but require more memory and can slow training. Must be divisible by <code>56</code>.</td>
+    </tr>
+    <tr>
+      <td><code>device</code></td>
+      <td>Specifies the hardware (<code>cpu</code>, <code>mps</code>, or <code>cuda</code>) to run training on. GPU typically speeds things up significantly.</td>
+    </tr>
+    <tr>
+      <td><code>use_ema</code></td>
+      <td>Enables Exponential Moving Average of weights, producing a smoothed checkpoint. Often improves final performance with slight overhead.</td>
+    </tr>
+    <tr>
+      <td><code>gradient_checkpointing</code></td>
+      <td>Re-computes parts of the forward pass during backpropagation to reduce memory usage. Lowers memory needs but increases training time.</td>
+    </tr>
+    <tr>
+      <td><code>checkpoint_interval</code></td>
+      <td>Frequency (in epochs) at which model checkpoints are saved. More frequent saves provide better coverage but consume more storage.</td>
+    </tr>
+    <tr>
+      <td><code>resume</code></td>
+      <td>Path to a saved checkpoint for continuing training. Restores both model weights and optimizer state.</td>
+    </tr>
+    <tr>
+      <td><code>tensorboard</code></td>
+      <td>Enables logging of training metrics to TensorBoard, allowing in-depth monitoring and visualization of progress.</td>
+    </tr>
+    <tr>
+      <td><code>wandb</code></td>
+      <td>Activates logging to Weights &amp; Biases, facilitating cloud-based experiment tracking and metric visualization.</td>
+    </tr>
+    <tr>
+      <td><code>project</code></td>
+      <td>Project name for Weights &amp; Biases logging. Groups multiple runs of the same project together.</td>
+    </tr>
+    <tr>
+      <td><code>run</code></td>
+      <td>Run name for Weights &amp; Biases logging. Helps distinguish among different training runs within the same project.</td>
+    </tr>
+  </tbody>
+</table>
+
+</details>
+
+### Resume training
+
+> [!IMPORTANT] 
+> Resume support isn’t officially released yet.
+> Install from source to access it: `pip install git+https://github.com/roboflow/rf-detr.git`.
+
+You can resume training from a previously saved checkpoint by passing the path to the `checkpoint.pth` file using the `resume` argument. This is useful when training is interrupted or you want to continue fine-tuning an already partially trained model. The training loop will automatically load the weights and optimizer state from the provided checkpoint file.
+
+```python
+from rfdetr import RFDETRBase
+
+model = RFDETRBase()
+
+model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_steps=4, lr=1e-4, resume=<CHECKPOINT_PATH>, output_dir=<OUTPUT_PATH>)
+```
+
 ### Batch size
 
 Different GPUs have different amounts of VRAM (video memory), which limits how much data they can handle at once during training. To make training work well on any machine, you can adjust two settings: `batch_size` and `grad_accum_steps`. These control how many samples are processed at a time. The key is to keep their product equal to 16 — that’s our recommended total batch size. For example, on powerful GPUs like the A100, set `batch_size=16` and `grad_accum_steps=1`. On smaller GPUs like the T4, use `batch_size=4` and `grad_accum_steps=4`. We use a method called gradient accumulation, which lets the model simulate training with a larger batch size by gradually collecting updates before adjusting the weights.
@@ -250,10 +401,40 @@ During training, two model checkpoints (the regular weights and an EMA-based set
 
 ### Logging with TensorBoard
 
-[TensorBoard](https://www.tensorflow.org/tensorboard) is a powerful toolkit that helps you visualize and track training metrics. With TensorBoard set up, you can train your model and keep an eye on the logs to monitor performance, compare experiments, and optimize model training.
+> [!IMPORTANT] 
+> TensorBoard support isn’t officially released yet.
+> Install from source to access it: `pip install git+https://github.com/roboflow/rf-detr.git`.
+
+[TensorBoard](https://www.tensorflow.org/tensorboard) is a powerful toolkit that helps you visualize and track training metrics. With TensorBoard set up, you can train your model and keep an eye on the logs to monitor performance, compare experiments, and optimize model training. To enable logging, simply pass `tensorboard=True` when training the model.
 
 <details>
-<summary>Launch TensorBoard</summary>
+<summary>Using TensorBoard with RF-DETR</summary>
+
+<br>
+
+- TensorBoard logging requires additional packages. Install them with:
+
+    ```bash
+    pip install "rfdetr[metrics]"
+    ```
+  
+- To activate logging, pass the extra parameter `tensorboard=True` to `.train()`:
+
+    ```python
+    from rfdetr import RFDETRBase
+    
+    model = RFDETRBase()
+    
+    model.train(
+        dataset_dir=<DATASET_PATH>,
+        epochs=10,
+        batch_size=4,
+        grad_accum_steps=4,
+        lr=1e-4,
+        output_dir=<OUTPUT_PATH>,
+        tensorboard=True
+    )
+    ```
 
 - To use TensorBoard locally, navigate to your project directory and run:
 
@@ -269,8 +450,57 @@ During training, two model checkpoints (the regular weights and an EMA-based set
     %load_ext tensorboard
     %tensorboard --logdir <OUTPUT_DIR>
     ```
+      
+</details>
 
-    This will start a TensorBoard session in the Google Colab environment.
+### Logging with Weights and Biases
+
+> [!IMPORTANT] 
+> Weights and Biases support isn’t officially released yet.
+> Install from source to access it: `pip install git+https://github.com/roboflow/rf-detr.git`.
+
+[Weights and Biases (W&B)](https://www.wandb.ai) is a powerful cloud-based platform that helps you visualize and track training metrics. With W&B set up, you can monitor performance, compare experiments, and optimize model training using its rich feature set. To enable logging, simply pass `wandb=True` when training the model.
+
+<details>
+<summary>Using Weights and Biases with RF-DETR</summary>
+
+<br>
+
+- Weights and Biases logging requires additional packages. Install them with:
+
+    ```bash
+    pip install "rfdetr[metrics]"
+    ```
+
+- Before using W&B, make sure you are logged in:
+
+    ```bash
+    wandb login
+    ```
+
+    You can retrieve your API key at wandb.ai/authorize.
+
+- To activate logging, pass the extra parameter `wandb=True` to `.train()`:
+
+    ```python
+    from rfdetr import RFDETRBase
+    
+    model = RFDETRBase()
+    
+    model.train(
+        dataset_dir=<DATASET_PATH>,
+        epochs=10,
+        batch_size=4,
+        grad_accum_steps=4,
+        lr=1e-4,
+        output_dir=<OUTPUT_PATH>,
+        wandb=True,
+        project=<PROJECT_NAME>,
+        run=<RUN_NAME>
+    )
+    ```
+
+    In W&B, projects are collections of related machine learning experiments, and runs are individual sessions where training or evaluation happens. If you don't specify a name for a run, W&B will assign a random one automatically.
   
 </details>
 
@@ -291,7 +521,7 @@ RF-DETR supports exporting models to the ONNX format, which enables interoperabi
 ```python
 from rfdetr import RFDETRBase
 
-model = RFDETRBase()
+model = RFDETRBase(pretrain_weights=<CHECKPOINT_PATH>)
 
 model.export()
 ```
