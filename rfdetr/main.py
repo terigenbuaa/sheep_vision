@@ -866,6 +866,7 @@ def populate_args(
     warmup_epochs=1,
     lr_scheduler='step',
     lr_min_factor=0.0,
+    gradient_checkpointing=False,
     # Additional
     subcommand=None,
     **extra_kwargs  # To handle any unexpected arguments
@@ -960,6 +961,7 @@ def populate_args(
         warmup_epochs=warmup_epochs,
         lr_scheduler=lr_scheduler,
         lr_min_factor=lr_min_factor,
+        gradient_checkpointing=gradient_checkpointing,
         **extra_kwargs
     )
     return args
