@@ -755,7 +755,7 @@ def get_args_parser():
     # Early stopping parameters
     parser.add_argument('--early_stopping', action='store_true',
                         help='Enable early stopping based on mAP improvement')
-    parser.add_argument('--early_stopping_patience', default=5, type=int,
+    parser.add_argument('--early_stopping_patience', default=10, type=int,
                         help='Number of epochs with no improvement after which training will be stopped')
     parser.add_argument('--early_stopping_min_delta', default=0.001, type=float,
                         help='Minimum change in mAP to qualify as an improvement')
@@ -893,7 +893,7 @@ def populate_args(
     lr_min_factor=0.0,
     # Early stopping parameters
     early_stopping=True,
-    early_stopping_patience=5,
+    early_stopping_patience=10,
     early_stopping_min_delta=0.001,
     early_stopping_use_ema=False,
     # Additional

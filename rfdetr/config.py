@@ -71,6 +71,6 @@ class TrainConfig(BaseModel):
     num_workers: int = 2
     weight_decay: float = 1e-4
     early_stopping: bool = True
-    early_stopping_patience: int = 5
+    early_stopping_patience: int = 10
     early_stopping_min_delta: float = 0.001
     early_stopping_use_ema: bool = False
