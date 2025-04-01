@@ -331,6 +331,22 @@ model = RFDETRBase()
 model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_steps=4, lr=1e-4, output_dir=<OUTPUT_PATH>)
 ```
 
+### Resume training
+
+> [!IMPORTANT] 
+> Resume support isn’t officially released yet.
+> Install from source to access it: `pip install git+https://github.com/roboflow/rf-detr.git`.
+
+You can resume training from a previously saved checkpoint by passing the path to the `checkpoint.pth` file using the `resume` argument. This is useful when training is interrupted or you want to continue fine-tuning an already partially trained model. The training loop will automatically load the weights and optimizer state from the provided checkpoint file.
+
+```python
+from rfdetr import RFDETRBase
+
+model = RFDETRBase()
+
+model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_steps=4, lr=1e-4, resume=<CHECKPOINT_PATH>, output_dir=<OUTPUT_PATH>)
+```
+
 ### Batch size
 
 Different GPUs have different amounts of VRAM (video memory), which limits how much data they can handle at once during training. To make training work well on any machine, you can adjust two settings: `batch_size` and `grad_accum_steps`. These control how many samples are processed at a time. The key is to keep their product equal to 16 — that’s our recommended total batch size. For example, on powerful GPUs like the A100, set `batch_size=16` and `grad_accum_steps=1`. On smaller GPUs like the T4, use `batch_size=4` and `grad_accum_steps=4`. We use a method called gradient accumulation, which lets the model simulate training with a larger batch size by gradually collecting updates before adjusting the weights.
@@ -470,7 +486,7 @@ RF-DETR supports exporting models to the ONNX format, which enables interoperabi
 ```python
 from rfdetr import RFDETRBase
 
-model = RFDETRBase()
+model = RFDETRBase(pretrain_weights=<CHECKPOINT_PATH>)
 
 model.export()
 ```
