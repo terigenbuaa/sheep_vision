@@ -295,7 +295,7 @@ model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_step
   <tbody>
     <tr>
       <td><code>dataset_dir</code></td>
-      <td>Specifies the COCO-formatted dataset location with separate <code>train</code>, <code>valid</code>, and <code>test</code> folders, each containing its own <code>_annotations.coco.json</code>. Ensures the model can properly read and parse data.</td>
+      <td>Specifies the COCO-formatted dataset location with <code>train</code>, <code>valid</code>, and <code>test</code> folders, each containing its own <code>_annotations.coco.json</code>. Ensures the model can properly read and parse data.</td>
     </tr>
     <tr>
       <td><code>output_dir</code></td>
@@ -315,15 +315,23 @@ model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_step
     </tr>
     <tr>
       <td><code>lr</code></td>
-      <td>Learning rate for the optimizer. Influences how quickly or cautiously the model adjusts its parameters.</td>
+      <td>Learning rate for most parts of the model. Influences how quickly or cautiously the model adjusts its parameters.</td>
+    </tr>
+    <tr>
+      <td><code>lr_encoder</code></td>
+      <td>Learning rate specifically for the encoder portion of the model. Useful if you want to fine-tune encoder layers at a different pace.</td>
     </tr>
     <tr>
       <td><code>resolution</code></td>
-      <td>Sets the input image dimensions. Higher values can improve accuracy but require more memory and can slow training. Must be divisible by <code>56</code>.</td>
+      <td>Sets the input image dimensions. Higher values can improve accuracy but require more memory and can slow training. Must be divisible by 56.</td>
+    </tr>
+    <tr>
+      <td><code>weight_decay</code></td>
+      <td>Coefficient for L2 regularization. Helps prevent overfitting by penalizing large weights, potentially improving generalization.</td>
     </tr>
     <tr>
       <td><code>device</code></td>
-      <td>Specifies the hardware (<code>cpu</code>, <code>mps</code>, or <code>cuda</code>) to run training on. GPU typically speeds things up significantly.</td>
+      <td>Specifies the hardware (e.g., <code>cpu</code> or <code>cuda</code>) to run training on. GPU typically speeds things up significantly.</td>
     </tr>
     <tr>
       <td><code>use_ema</code></td>
@@ -343,22 +351,23 @@ model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_step
     </tr>
     <tr>
       <td><code>tensorboard</code></td>
-      <td>Enables logging of training metrics to TensorBoard, allowing in-depth monitoring and visualization of progress.</td>
+      <td>Enables logging of training metrics to TensorBoard for monitoring progress and performance.</td>
     </tr>
     <tr>
       <td><code>wandb</code></td>
-      <td>Activates logging to Weights &amp; Biases, facilitating cloud-based experiment tracking and metric visualization.</td>
+      <td>Activates logging to Weights &amp; Biases, facilitating cloud-based tracking and metric visualization.</td>
     </tr>
     <tr>
       <td><code>project</code></td>
-      <td>Project name for Weights &amp; Biases logging. Groups multiple runs of the same project together.</td>
+      <td>Project name for Weights &amp; Biases logging. Groups multiple runs under a single heading.</td>
     </tr>
     <tr>
       <td><code>run</code></td>
-      <td>Run name for Weights &amp; Biases logging. Helps distinguish among different training runs within the same project.</td>
+      <td>Run name for Weights &amp; Biases logging, helping differentiate individual training sessions within a project.</td>
     </tr>
   </tbody>
 </table>
+
 
 </details>
 
