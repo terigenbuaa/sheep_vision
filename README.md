@@ -355,9 +355,10 @@ During training, two model checkpoints (the regular weights and an EMA-based set
 ### Logging with TensorBoard
 
 > [!IMPORTANT] 
-> TensorBoard support isn’t officially released yet. Install from source to access it: `pip install git+https://github.com/roboflow/rf-detr.git`.
+> TensorBoard support isn’t officially released yet.
+> Install from source to access it: `pip install git+https://github.com/roboflow/rf-detr.git`.
 
-[TensorBoard](https://www.tensorflow.org/tensorboard) is a powerful toolkit that helps you visualize and track training metrics. With TensorBoard set up, you can train your model and keep an eye on the logs to monitor performance, compare experiments, and optimize model training. To enable logging, simply pass `tensorboard=True`
+[TensorBoard](https://www.tensorflow.org/tensorboard) is a powerful toolkit that helps you visualize and track training metrics. With TensorBoard set up, you can train your model and keep an eye on the logs to monitor performance, compare experiments, and optimize model training. To enable logging, simply pass `tensorboard=True` when training the model.
 
 <details>
 <summary>Using TensorBoard with RF-DETR</summary>
@@ -368,14 +369,22 @@ During training, two model checkpoints (the regular weights and an EMA-based set
     pip install "rfdetr[metrics]"
     ```
   
-  - To activate logging, pass the extra parameter `tensorboard=True` to `.train()`:
+- To activate logging, pass the extra parameter `tensorboard=True` to `.train()`:
 
     ```python
     from rfdetr import RFDETRBase
-  
+    
     model = RFDETRBase()
-  
-    model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_steps=4, lr=1e-4, output_dir=<OUTPUT_PATH>, tensorboard=True)
+    
+    model.train(
+        dataset_dir=<DATASET_PATH>,
+        epochs=10,
+        batch_size=4,
+        grad_accum_steps=4,
+        lr=1e-4,
+        output_dir=<OUTPUT_PATH>,
+        tensorboard=True
+    )
     ```
 
 - To use TensorBoard locally, navigate to your project directory and run:
@@ -392,37 +401,55 @@ During training, two model checkpoints (the regular weights and an EMA-based set
     %load_ext tensorboard
     %tensorboard --logdir <OUTPUT_DIR>
     ```
-
-    This will start a TensorBoard session in the Google Colab environment.
-  
+      
 </details>
 
 ### Logging with Weights and Biases
 
-[Weights and Biases](https://www.wandb.ai) similar to TensorBoard is a very powerful platform to monitor training metrics. It is cloud-based and offers a more complex feature set compared to TensorBoard.
+> [!IMPORTANT] 
+> Weights and Biases support isn’t officially released yet.
+> Install from source to access it: `pip install git+https://github.com/roboflow/rf-detr.git`.
+
+[Weights and Biases (W&B)](https://www.wandb.ai) is a powerful cloud-based platform that helps you visualize and track training metrics. With W&B set up, you can monitor performance, compare experiments, and optimize model training using its rich feature set. To enable logging, simply pass `wandb=True` when training the model.
 
 <details>
-<summary>Get Started</summary>
+<summary>Using Weights and Biases with RF-DETR</summary>
 
-- To use W&B, make sure you are logged in:
+- Weights and Biases logging requires additional packages. Install them with:
+
+    ```bash
+    pip install "rfdetr[metrics]"
+    ```
+
+- Before using W&B, make sure you are logged in:
 
     ```bash
     wandb login
     ```
 
-    You will need to specify an API Key for your account that can be retrieved at https://wandb.ai/authorize.
+    You can retrieve your API key at wandb.ai/authorize.
 
-- For those familiar with W&B, you can specify the `project_name` and `run_name` in the `model.train` method:
+- To activate logging, pass the extra parameter `wandb=True` to `.train()`:
 
     ```python
     from rfdetr import RFDETRBase
-
+    
     model = RFDETRBase()
-
-    detections = model.train(dataset_dir=<DATASET_PATH>, project_name=<PROJECT_NAME>, run_name=<RUN_NAME>)
+    
+    model.train(
+        dataset_dir=<DATASET_PATH>,
+        epochs=10,
+        batch_size=4,
+        grad_accum_steps=4,
+        lr=1e-4,
+        output_dir=<OUTPUT_PATH>,
+        wandb=True,
+        project=<PROJECT_NAME>,
+        run=<RUN_NAME>
+    )
     ```
 
-    For those unfamiliar with W&B: projects are collections of related machine learning experiments, while runs are individual units of computation within a project that record specific experiments, such as training a model or conducting hyperparameter tuning. Not specifying a name, will result in random names provided by W&B.
+    In W&B, projects are collections of related machine learning experiments, and runs are individual sessions where training or evaluation happens. If you don't specify a name for a run, W&B will assign a random one automatically.
   
 </details>
 
