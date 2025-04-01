@@ -423,7 +423,6 @@ def save_on_master(obj, f, *args, **kwargs):
     """
     if is_main_process():
         if isinstance(obj, dict) and 'model' in obj:
-            print("Falling back to saving only model state_dict")
             torch.save({'model': obj['model']}, f, *args, **kwargs)
         else:
             raise ValueError("Invalid object type for saving")
