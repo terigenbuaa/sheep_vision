@@ -354,10 +354,29 @@ During training, two model checkpoints (the regular weights and an EMA-based set
 
 ### Logging with TensorBoard
 
-[TensorBoard](https://www.tensorflow.org/tensorboard) is a powerful toolkit that helps you visualize and track training metrics. With TensorBoard set up, you can train your model and keep an eye on the logs to monitor performance, compare experiments, and optimize model training.
+> [!IMPORTANT] 
+> TensorBoard support isn’t officially released yet. Install from source to access it: `pip install git+https://github.com/roboflow/rf-detr.git`.
+
+[TensorBoard](https://www.tensorflow.org/tensorboard) is a powerful toolkit that helps you visualize and track training metrics. With TensorBoard set up, you can train your model and keep an eye on the logs to monitor performance, compare experiments, and optimize model training. To enable logging, simply pass `tensorboard=True`
 
 <details>
-<summary>Launch TensorBoard</summary>
+<summary>Using TensorBoard with RF-DETR</summary>
+
+- TensorBoard logging requires additional packages. Install them with:
+
+    ```bash
+    pip install "rfdetr[metrics]"
+    ```
+  
+  - To activate logging, pass the extra parameter `tensorboard=True` to `.train()`:
+
+    ```python
+    from rfdetr import RFDETRBase
+  
+    model = RFDETRBase()
+  
+    model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_steps=4, lr=1e-4, output_dir=<OUTPUT_PATH>, tensorboard=True)
+    ```
 
 - To use TensorBoard locally, navigate to your project directory and run:
 
@@ -378,9 +397,9 @@ During training, two model checkpoints (the regular weights and an EMA-based set
   
 </details>
 
-### Logging with Weights and Biases (W&B)
+### Logging with Weights and Biases
 
-[W&B](https://www.wandb.ai) similar to TensorBoard is a very powerful platform to monitor training metrics. It is cloud-based and offers a more complex feature set compared to TensorBoard.
+[Weights and Biases](https://www.wandb.ai) similar to TensorBoard is a very powerful platform to monitor training metrics. It is cloud-based and offers a more complex feature set compared to TensorBoard.
 
 <details>
 <summary>Get Started</summary>
