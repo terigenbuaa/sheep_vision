@@ -2,6 +2,10 @@
 Early stopping callback for RF-DETR training
 """
 
+from logging import getLogger
+
+logger = getLogger(__name__)
+
 class EarlyStoppingCallback:
     """
     Early stopping callback that monitors mAP and stops training if no improvement 
@@ -50,7 +54,7 @@ class EarlyStoppingCallback:
             metric_source = "regular"
         else:
             if self.verbose:
-                print("Early stopping: No valid mAP metric found, skipping check")
+                raise ValueError("No valid mAP metric found!")
             return
         
         if self.verbose:
@@ -59,8 +63,7 @@ class EarlyStoppingCallback:
         if current_map > self.best_map + self.min_delta:
             self.best_map = current_map
             self.counter = 0
-            if self.verbose:
-                print(f"Early stopping: mAP improved to {current_map:.4f} using {metric_source} metric")
+            logger.info(f"Early stopping: mAP improved to {current_map:.4f} using {metric_source} metric")
         else:
             self.counter += 1
             if self.verbose:
