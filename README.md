@@ -24,6 +24,9 @@ We validated the performance of RF-DETR on both Microsoft COCO and the RF100-VL 
 
 <details>
 <summary>RF100-VL benchmark results</summary>
+
+<br>
+    
 <img src="https://github.com/user-attachments/assets/e61a7ba4-5294-40a9-8cd7-4fc924639924" alt="rf100-vl-map50">
 </details>
 
@@ -58,6 +61,8 @@ pip install rfdetr
 
 <details>
 <summary>From source</summary>
+
+<br>
 
 By installing RF-DETR from source, you can explore the most recent features and enhancements that have not yet been officially released. Please note that these updates are still in development and may not be as stable as the latest published release.
 
@@ -103,6 +108,8 @@ sv.plot_image(annotated_image)
 <details>
 <summary>Video inference</summary>
 
+<br>
+
 ```python
 import supervision as sv
 from rfdetr import RFDETRBase
@@ -135,6 +142,8 @@ sv.process_video(
 
 <details>
 <summary>Webcam inference</summary>
+
+<br>
 
 ```python
 import cv2
@@ -175,6 +184,8 @@ cv2.destroyAllWindows()
 
 <details>
 <summary>RTSP stream inference</summary>
+
+<br>
 
 ```python
 import cv2
@@ -267,6 +278,90 @@ model = RFDETRBase()
 model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_steps=4, lr=1e-4, output_dir=<OUTPUT_PATH>)
 ```
 
+</details>
+
+<details>
+<summary>Parameters</summary>
+
+<br>
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>dataset_dir</code></td>
+      <td>Specifies the COCO-formatted dataset location with separate <code>train</code>, <code>valid</code>, and <code>test</code> folders, each containing its own <code>_annotations.coco.json</code>. Ensures the model can properly read and parse data.</td>
+    </tr>
+    <tr>
+      <td><code>output_dir</code></td>
+      <td>Directory where training artifacts (checkpoints, logs, etc.) are saved. Important for experiment tracking and resuming training.</td>
+    </tr>
+    <tr>
+      <td><code>epochs</code></td>
+      <td>Number of full passes over the dataset. Increasing this can improve performance but extends total training time.</td>
+    </tr>
+    <tr>
+      <td><code>batch_size</code></td>
+      <td>Number of samples processed per iteration. Higher values require more GPU memory but can speed up training. Must be balanced with <code>grad_accum_steps</code> to maintain the intended total batch size.</td>
+    </tr>
+    <tr>
+      <td><code>grad_accum_steps</code></td>
+      <td>Accumulates gradients over multiple mini-batches, effectively raising the total batch size without requiring as much memory at once. Helps train on smaller GPUs at the cost of slightly more time per update.</td>
+    </tr>
+    <tr>
+      <td><code>lr</code></td>
+      <td>Learning rate for the optimizer. Influences how quickly or cautiously the model adjusts its parameters.</td>
+    </tr>
+    <tr>
+      <td><code>resolution</code></td>
+      <td>Sets the input image dimensions. Higher values can improve accuracy but require more memory and can slow training. Must be divisible by <code>56</code>.</td>
+    </tr>
+    <tr>
+      <td><code>device</code></td>
+      <td>Specifies the hardware (<code>cpu</code>, <code>mps</code>, or <code>cuda</code>) to run training on. GPU typically speeds things up significantly.</td>
+    </tr>
+    <tr>
+      <td><code>use_ema</code></td>
+      <td>Enables Exponential Moving Average of weights, producing a smoothed checkpoint. Often improves final performance with slight overhead.</td>
+    </tr>
+    <tr>
+      <td><code>gradient_checkpointing</code></td>
+      <td>Re-computes parts of the forward pass during backpropagation to reduce memory usage. Lowers memory needs but increases training time.</td>
+    </tr>
+    <tr>
+      <td><code>checkpoint_interval</code></td>
+      <td>Frequency (in epochs) at which model checkpoints are saved. More frequent saves provide better coverage but consume more storage.</td>
+    </tr>
+    <tr>
+      <td><code>resume</code></td>
+      <td>Path to a saved checkpoint for continuing training. Restores both model weights and optimizer state.</td>
+    </tr>
+    <tr>
+      <td><code>tensorboard</code></td>
+      <td>Enables logging of training metrics to TensorBoard, allowing in-depth monitoring and visualization of progress.</td>
+    </tr>
+    <tr>
+      <td><code>wandb</code></td>
+      <td>Activates logging to Weights &amp; Biases, facilitating cloud-based experiment tracking and metric visualization.</td>
+    </tr>
+    <tr>
+      <td><code>project</code></td>
+      <td>Project name for Weights &amp; Biases logging. Groups multiple runs of the same project together.</td>
+    </tr>
+    <tr>
+      <td><code>run</code></td>
+      <td>Run name for Weights &amp; Biases logging. Helps distinguish among different training runs within the same project.</td>
+    </tr>
+  </tbody>
+</table>
+
+</details>
+
 ### Resume training
 
 > [!IMPORTANT] 
@@ -314,6 +409,8 @@ During training, two model checkpoints (the regular weights and an EMA-based set
 
 <details>
 <summary>Using TensorBoard with RF-DETR</summary>
+
+<br>
 
 - TensorBoard logging requires additional packages. Install them with:
 
@@ -366,6 +463,8 @@ During training, two model checkpoints (the regular weights and an EMA-based set
 
 <details>
 <summary>Using Weights and Biases with RF-DETR</summary>
+
+<br>
 
 - Weights and Biases logging requires additional packages. Install them with:
 
