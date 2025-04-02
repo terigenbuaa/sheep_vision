@@ -295,7 +295,7 @@ model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_step
   <tbody>
     <tr>
       <td><code>dataset_dir</code></td>
-      <td>Specifies the COCO-formatted dataset location with <code>train</code>, <code>valid</code>, and <code>test</code> folders, each containing its own <code>_annotations.coco.json</code>. Ensures the model can properly read and parse data.</td>
+      <td>Specifies the COCO-formatted dataset location with <code>train</code>, <code>valid</code>, and <code>test</code> folders, each containing <code>_annotations.coco.json</code>. Ensures the model can properly read and parse data.</td>
     </tr>
     <tr>
       <td><code>output_dir</code></td>
@@ -319,7 +319,7 @@ model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_step
     </tr>
     <tr>
       <td><code>lr_encoder</code></td>
-      <td>Learning rate specifically for the encoder portion of the model. Useful if you want to fine-tune encoder layers at a different pace.</td>
+      <td>Learning rate specifically for the encoder portion of the model. Useful for fine-tuning encoder layers at a different pace.</td>
     </tr>
     <tr>
       <td><code>resolution</code></td>
@@ -327,11 +327,11 @@ model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_step
     </tr>
     <tr>
       <td><code>weight_decay</code></td>
-      <td>Coefficient for L2 regularization. Helps prevent overfitting by penalizing large weights, potentially improving generalization.</td>
+      <td>Coefficient for L2 regularization. Helps prevent overfitting by penalizing large weights, often improving generalization.</td>
     </tr>
     <tr>
       <td><code>device</code></td>
-      <td>Specifies the hardware (e.g., <code>cpu</code> or <code>cuda</code>) to run training on. GPU typically speeds things up significantly.</td>
+      <td>Specifies the hardware (e.g., <code>cpu</code> or <code>cuda</code>) to run training on. GPU significantly speeds up training.</td>
     </tr>
     <tr>
       <td><code>use_ema</code></td>
@@ -355,7 +355,7 @@ model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_step
     </tr>
     <tr>
       <td><code>wandb</code></td>
-      <td>Activates logging to Weights &amp; Biases, facilitating cloud-based tracking and metric visualization.</td>
+      <td>Activates logging to Weights &amp; Biases, facilitating cloud-based experiment tracking and visualization.</td>
     </tr>
     <tr>
       <td><code>project</code></td>
@@ -365,9 +365,24 @@ model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_step
       <td><code>run</code></td>
       <td>Run name for Weights &amp; Biases logging, helping differentiate individual training sessions within a project.</td>
     </tr>
+    <tr>
+      <td><code>early_stopping</code></td>
+      <td>Enables an early stopping callback that monitors mAP improvements to decide if training should be stopped. Helps avoid needless epochs when mAP plateaus.</td>
+    </tr>
+    <tr>
+      <td><code>early_stopping_patience</code></td>
+      <td>Number of consecutive epochs without mAP improvement before stopping. Prevents wasting resources on minimal gains.</td>
+    </tr>
+    <tr>
+      <td><code>early_stopping_min_delta</code></td>
+      <td>Minimum change in mAP to qualify as an improvement. Ensures that trivial gains don’t reset the early stopping counter.</td>
+    </tr>
+    <tr>
+      <td><code>early_stopping_use_ema</code></td>
+      <td>Whether to track improvements using the EMA version of the model. Uses EMA metrics if available, otherwise falls back to regular mAP.</td>
+    </tr>
   </tbody>
 </table>
-
 
 </details>
 
@@ -384,7 +399,23 @@ from rfdetr import RFDETRBase
 
 model = RFDETRBase()
 
-model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_steps=4, lr=1e-4, resume=<CHECKPOINT_PATH>, output_dir=<OUTPUT_PATH>)
+model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_steps=4, lr=1e-4, output_dir=<OUTPUT_PATH>, )
+```
+
+### Early stopping
+
+> [!IMPORTANT] 
+> Early stopping isn’t officially released yet.
+> Install from source to access it: `pip install git+https://github.com/roboflow/rf-detr.git`.
+
+Early stopping monitors validation mAP and halts training if improvements remain below a threshold for a set number of epochs. This can reduce wasted computation once the model converges. Additional parameters—such as `early_stopping_patience`, `early_stopping_min_delta`, and `early_stopping_use_ema`—let you fine-tune the stopping behavior.
+
+```python
+from rfdetr import RFDETRBase
+
+model = RFDETRBase()
+
+model.train(dataset_dir=<DATASET_PATH>, epochs=10, batch_size=4, grad_accum_steps=4, lr=1e-4, output_dir=<OUTPUT_PATH>, early_stopping=True)
 ```
 
 ### Batch size
