@@ -31,6 +31,7 @@ class RFDETRBaseConfig(ModelConfig):
     ca_nheads: int = 16
     dec_n_points: int = 2
     num_queries: int = 300
+    num_select: int = 300
     projector_scale: List[Literal["P3", "P4", "P5"]] = ["P4"]
     out_feature_indexes: List[int] = [2, 5, 8, 11]
     pretrain_weights: Optional[str] = "rf-detr-base.pth"
