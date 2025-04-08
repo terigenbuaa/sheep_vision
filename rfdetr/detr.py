@@ -131,8 +131,9 @@ class RFDETR:
                     "image_or_path is a torch.Tensor\n",
                     "we expect an image divided by 255 at (C, H, W)",
                 )
-                assert image_or_path.shape[0] == 3, "image must have 3 channels"
-                h, w = image_or_path.shape[1:]
+                image = image_or_path
+                assert image.shape[0] == 3, "image must have 3 channels"
+                h, w = image.shape[1:]
 
             image = image.to(self.model.device)
             image = F.normalize(image, self.means, self.stds)
