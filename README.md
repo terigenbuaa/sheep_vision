@@ -536,6 +536,9 @@ detections = model.predict(<IMAGE_PATH>)
 
 ## ONNX export
 
+> [!IMPORTANT]
+> Starting with RF-DETR 1.2.0, you'll have to run `pip install rfdetr[onnxexport]` before exporting model weights to ONNX format.  
+
 RF-DETR supports exporting models to the ONNX format, which enables interoperability with various inference frameworks and can improve deployment efficiency. To export your model, simply initialize it and call the `.export()` method.
 
 ```python

@@ -447,7 +447,11 @@ class Model:
     def export(self, output_dir="output", infer_dir=None, simplify=False,  backbone_only=False, opset_version=17, verbose=True, force=False, shape=None, batch_size=1, **kwargs):
         """Export the trained model to ONNX format"""
         print(f"Exporting model to ONNX format")
-        from rfdetr.deploy.export import export_onnx, onnx_simplify, make_infer_image
+        try:
+            from rfdetr.deploy.export import export_onnx, onnx_simplify, make_infer_image
+        except ImportError:
+            print("It seems some dependencies for ONNX export are missing. Please run `pip install rfdetr[onnxexport]` and try again.")
+            raise
 
 
         device = self.device
