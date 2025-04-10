@@ -174,12 +174,13 @@ class RFDETR:
                     )
                 img_tensor = img
 
+            h, w = img_tensor.shape[1:]
+            orig_sizes.append((h, w))
+
             img_tensor = img_tensor.to(self.model.device)
             img_tensor = F.normalize(img_tensor, self.means, self.stds)
             img_tensor = F.resize(img_tensor, (self.model.resolution, self.model.resolution))
 
-            h, w = img_tensor.shape[1:]
-            orig_sizes.append((h, w))
             processed_images.append(img_tensor)
 
         batch_tensor = torch.stack(processed_images)
