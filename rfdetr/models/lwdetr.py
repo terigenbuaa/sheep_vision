@@ -305,7 +305,9 @@ class SetCriterion(nn.Module):
 
             pos_weights[pos_ind] = t.to(pos_weights.dtype)
             neg_weights[pos_ind] = 1 - t.to(neg_weights.dtype)
-            loss_ce = - pos_weights * prob.log() - neg_weights * (1 - prob).log()
+            # a reformulation of the standard loss_ce = - pos_weights * prob.log() - neg_weights * (1 - prob).log()
+            # with a focus on statistical stability by using fused logsigmoid
+            loss_ce = neg_weights * src_logits - F.logsigmoid(src_logits) * (pos_weights + neg_weights)
             loss_ce = loss_ce.sum() / num_boxes
 
         elif self.use_position_supervised_loss:
