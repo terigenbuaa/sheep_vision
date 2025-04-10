@@ -112,17 +112,12 @@ class RFDETR:
         return Model(**config.dict())
 
     def predict(
-        self,
-        images: Union[
-            str, Image.Image, np.ndarray, torch.Tensor,
-            List[Union[str, Image.Image, np.ndarray, torch.Tensor]]
-        ],
-        threshold: float = 0.5,
-        **kwargs,
+            self,
+            images: Union[str, Image.Image, np.ndarray, torch.Tensor, List[Union[str, np.ndarray, Image.Image, torch.Tensor]]],
+            threshold: float = 0.5,
+            **kwargs,
     ):
-
         self.model.model.eval()
-        self.model.device = self.model.device or torch.device("cpu")
 
         if not isinstance(images, list):
             images = [images]
@@ -131,38 +126,29 @@ class RFDETR:
         processed_images = []
 
         for img in images:
-            # Load image if path
+
             if isinstance(img, str):
-                img = Image.open(img).convert("RGB")
+                img = Image.open(img)
 
-            # Convert to tensor if needed
-            if isinstance(img, Image.Image):
-                img_tensor = F.to_tensor(img)  # C, H, W
-                h, w = img_tensor.shape[1:]
-            elif isinstance(img, np.ndarray):
-                img = Image.fromarray(img).convert("RGB")
+            if not isinstance(img, torch.Tensor):
                 img_tensor = F.to_tensor(img)
-                h, w = img_tensor.shape[1:]
-            elif isinstance(img, torch.Tensor):
-                img_tensor = img
-                h, w = img_tensor.shape[1:]
-                assert img_tensor.shape[0] == 3, "Image tensor must have 3 channels"
             else:
-                raise ValueError(f"Unsupported image type: {type(img)}")
+                logger.warning("Image is a torch.Tensor, we expect an image divided by 255 at (C, H, W)")
+                img_tensor = img
+                assert img_tensor.shape[0] == 3, "image must have 3 channels"
 
-            # Normalize & resize
             img_tensor = img_tensor.to(self.model.device)
             img_tensor = F.normalize(img_tensor, self.means, self.stds)
             img_tensor = F.resize(img_tensor, (self.model.resolution, self.model.resolution))
 
-            processed_images.append(img_tensor)
+            h, w = img_tensor.shape[1:]
             orig_sizes.append((h, w))
+            processed_images.append(img_tensor)
 
-        batch_tensor = torch.stack(processed_images)  # Shape: [B, 3, H, W]
+        batch_tensor = torch.stack(processed_images)
 
         with torch.inference_mode():
             predictions = self.model.model(batch_tensor)
-
             target_sizes = torch.tensor(orig_sizes, device=self.model.device)
             results = self.model.postprocessors["bbox"](predictions, target_sizes=target_sizes)
 
