@@ -9,7 +9,7 @@ import json
 import os
 from collections import defaultdict
 from logging import getLogger
-from typing import Union
+from typing import Union, List
 
 import numpy as np
 import supervision as sv
@@ -119,59 +119,65 @@ class RFDETR:
         return Model(**config.dict())
 
     def predict(
-        self,
-        image_or_path: Union[str, Image.Image, np.ndarray, torch.Tensor],
-        threshold: float = 0.5,
-        **kwargs,
+            self,
+            images: Union[str, Image.Image, np.ndarray, torch.Tensor, List[Union[str, np.ndarray, Image.Image, torch.Tensor]]],
+            threshold: float = 0.5,
+            **kwargs,
     ):
         self.model.model.eval()
-        with torch.inference_mode():
-            if isinstance(image_or_path, str):
-                image_or_path = Image.open(image_or_path)
-                w, h = image_or_path.size
 
-            if not isinstance(image_or_path, torch.Tensor):
-                image = F.to_tensor(image_or_path)
-                _, h, w = image.shape
+        if not isinstance(images, list):
+            images = [images]
+
+        orig_sizes = []
+        processed_images = []
+
+        for img in images:
+
+            if isinstance(img, str):
+                img = Image.open(img)
+
+            if not isinstance(img, torch.Tensor):
+                img_tensor = F.to_tensor(img)
             else:
-                logger.warning(
-                    "image_or_path is a torch.Tensor\n",
-                    "we expect an image divided by 255 at (C, H, W)",
-                )
-                image = image_or_path
-                assert image.shape[0] == 3, "image must have 3 channels"
-                h, w = image.shape[1:]
+                logger.warning("Image is a torch.Tensor, we expect an image divided by 255 at (C, H, W)")
+                img_tensor = img
+                assert img_tensor.shape[0] == 3, "image must have 3 channels"
 
-            image = image.to(self.model.device)
-            image = F.normalize(image, self.means, self.stds)
-            image = F.resize(image, (self.model.resolution, self.model.resolution))
+            img_tensor = img_tensor.to(self.model.device)
+            img_tensor = F.normalize(img_tensor, self.means, self.stds)
+            img_tensor = F.resize(img_tensor, (self.model.resolution, self.model.resolution))
 
-            predictions = self.model.model.forward(image[None, :])
-            bboxes = predictions["pred_boxes"]
-            results = self.model.postprocessors["bbox"](
-                predictions,
-                target_sizes=torch.tensor([[h, w]], device=self.model.device),
-            )
-            scores, labels, boxes = [], [], []
-            for result in results:
-                scores.append(result["scores"])
-                labels.append(result["labels"])
-                boxes.append(result["boxes"])
+            h, w = img_tensor.shape[1:]
+            orig_sizes.append((h, w))
+            processed_images.append(img_tensor)
 
-            scores = torch.stack(scores)
-            labels = torch.stack(labels)
-            boxes = torch.stack(boxes)
+        batch_tensor = torch.stack(processed_images)
 
-            keep_inds = scores > threshold
-            boxes = boxes[keep_inds]
-            labels = labels[keep_inds]
-            scores = scores[keep_inds]
+        with torch.inference_mode():
+            predictions = self.model.model(batch_tensor)
+            target_sizes = torch.tensor(orig_sizes, device=self.model.device)
+            results = self.model.postprocessors["bbox"](predictions, target_sizes=target_sizes)
+
+        detections_list = []
+        for result in results:
+            scores = result["scores"]
+            labels = result["labels"]
+            boxes = result["boxes"]
+
+            keep = scores > threshold
+            scores = scores[keep]
+            labels = labels[keep]
+            boxes = boxes[keep]
+
             detections = sv.Detections(
                 xyxy=boxes.cpu().numpy(),
-                class_id=labels.cpu().numpy(),
                 confidence=scores.cpu().numpy(),
+                class_id=labels.cpu().numpy(),
             )
-            return detections
+            detections_list.append(detections)
+
+        return detections_list if len(detections_list) > 1 else detections_list[0]
 
 
 class RFDETRBase(RFDETR):
