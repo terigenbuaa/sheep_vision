@@ -53,6 +53,7 @@ class RFDETR:
             anns = json.load(f)
             num_classes = len(anns["categories"])
             class_names = [c["name"] for c in anns["categories"] if c["supercategory"] != "none"]
+            self.model.class_names = class_names
 
         if self.model_config.num_classes != num_classes:
             logger.warning(
