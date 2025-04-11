@@ -223,7 +223,7 @@ class Model:
             sampler_val = torch.utils.data.SequentialSampler(dataset_val)
 
         effective_batch_size = args.batch_size * args.grad_accum_steps
-        min_batches = kwargs.get('min_batches', 10)
+        min_batches = kwargs.get('min_batches', 5)
         if len(dataset_train) < effective_batch_size * min_batches:
             logger.info(
                 f"Training with uniform sampler because dataset is too small: {len(dataset_train)} < {effective_batch_size * min_batches}"
