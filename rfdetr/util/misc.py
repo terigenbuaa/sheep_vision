@@ -501,5 +501,6 @@ def strip_checkpoint(checkpoint):
     state_dict = torch.load(checkpoint, map_location="cpu", weights_only=False)
     new_state_dict = {
         'model': state_dict['model'],
+        'args': state_dict['args'],
     }
     torch.save(new_state_dict, checkpoint)
