@@ -223,11 +223,33 @@ class Model:
             sampler_val = torch.utils.data.SequentialSampler(dataset_val)
 
         effective_batch_size = args.batch_size * args.grad_accum_steps
-        batch_sampler_train = torch.utils.data.BatchSampler(
-            sampler_train, effective_batch_size, drop_last=True)
-
-        data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,
-                                    collate_fn=utils.collate_fn, num_workers=args.num_workers)
+        min_batches = kwargs.get('min_batches', 5)
+        if len(dataset_train) < effective_batch_size * min_batches:
+            logger.info(
+                f"Training with uniform sampler because dataset is too small: {len(dataset_train)} < {effective_batch_size * min_batches}"
+            )
+            sampler = torch.utils.data.RandomSampler(
+                dataset_train,
+                replacement=True,
+                num_samples=effective_batch_size * min_batches,
+            )
+            data_loader_train = DataLoader(
+                dataset_train,
+                batch_size=effective_batch_size,
+                collate_fn=utils.collate_fn,
+                num_workers=args.num_workers,
+                sampler=sampler,
+            )
+        else:
+            batch_sampler_train = torch.utils.data.BatchSampler(
+                sampler_train, effective_batch_size, drop_last=True)
+            data_loader_train = DataLoader(
+                dataset_train, 
+                batch_sampler=batch_sampler_train,
+                collate_fn=utils.collate_fn, 
+                num_workers=args.num_workers
+            )
+        
         data_loader_val = DataLoader(dataset_val, args.batch_size, sampler=sampler_val,
                                     drop_last=False, collate_fn=utils.collate_fn, 
                                     num_workers=args.num_workers)
