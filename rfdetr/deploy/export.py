@@ -32,7 +32,6 @@ from rfdetr.models import build_model
 from rfdetr.deploy._onnx import OnnxOptimizer
 import re
 import sys
-import wandb
 
 
 def run_command_shell(command, dry_run:bool = False) -> int:
@@ -150,6 +149,7 @@ def trtexec(onnx_dir:str, args) -> None:
     output = run_command_shell(command, args.dry_run)
     stats = parse_trtexec_output(output.stdout)
     if args.wandb:
+        import wandb
         wandb.log(stats, step=1)
 
 def parse_trtexec_output(output_text):
@@ -232,6 +232,7 @@ def main(args):
     model, criterion, postprocessors = build_model(args)
     n_parameters = sum(p.numel() for p in model.parameters())
     if args.wandb:
+        import wandb
         wandb.config.update({"n_parameters": n_parameters}, allow_val_change=True)
     print(f"number of parameters: {n_parameters}")
     n_backbone_parameters = sum(p.numel() for p in model.backbone.parameters())
