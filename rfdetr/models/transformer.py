@@ -445,7 +445,7 @@ class TransformerDecoderLayer(nn.Module):
                  skip_self_attn=False):
         super().__init__()
         # Decoder Self-Attention
-        self.self_attn = MultiheadAttention(embed_dim=d_model, num_heads=sa_nhead, dropout=dropout, batch_first=True)
+        self.self_attn = nn.MultiheadAttention(embed_dim=d_model, num_heads=sa_nhead, dropout=dropout, batch_first=True)
         self.dropout1 = nn.Dropout(dropout)
         self.norm1 = nn.LayerNorm(d_model)
 
@@ -499,7 +499,8 @@ class TransformerDecoderLayer(nn.Module):
             v = torch.cat(v.split(num_queries // self.group_detr, dim=1), dim=0)
 
         tgt2 = self.self_attn(q, k, v, attn_mask=tgt_mask,
-                            key_padding_mask=tgt_key_padding_mask)[0]
+                            key_padding_mask=tgt_key_padding_mask,
+                            need_weights=False)[0]
         
         if self.training:
             tgt2 = torch.cat(tgt2.split(bs, dim=0), dim=1)

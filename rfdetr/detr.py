@@ -10,12 +10,15 @@ import os
 from collections import defaultdict
 from logging import getLogger
 from typing import Union, List
+from copy import deepcopy
 
 import numpy as np
 import supervision as sv
 import torch
 import torchvision.transforms.functional as F
 from PIL import Image
+
+torch.set_float32_matmul_precision('high')
 
 from rfdetr.config import RFDETRBaseConfig, RFDETRLargeConfig, TrainConfig, ModelConfig
 from rfdetr.main import Model, download_pretrain_weights
@@ -33,6 +36,9 @@ class RFDETR:
         self.model = self.get_model(self.model_config)
         self.callbacks = defaultdict(list)
 
+        self.is_optimized_for_inference = False
+        self.has_warned_about_not_being_optimized_for_inference = False
+
     def maybe_download_pretrain_weights(self):
         download_pretrain_weights(self.model_config.pretrain_weights)
 
@@ -42,6 +48,19 @@ class RFDETR:
     def train(self, **kwargs):
         config = self.get_train_config(**kwargs)
         self.train_from_config(config, **kwargs)
+    
+    def optimize_for_inference(self, compile=True):
+        self.model.inference_model = deepcopy(self.model.model)
+        self.model.inference_model.eval()
+        self.model.inference_model.export()
+
+        if compile:
+            self.model.inference_model = torch.jit.trace(
+                self.model.inference_model,
+                torch.randn(1, 3, self.model.resolution, self.model.resolution, device=self.model.device)
+            )
+
+        self.is_optimized_for_inference = True
     
     def export(self, **kwargs):
         self.model.export(**kwargs)
@@ -156,7 +175,15 @@ class RFDETR:
                 objects, each containing bounding box coordinates, confidence scores,
                 and class IDs.
         """
-        self.model.model.eval()
+        if not self.is_optimized_for_inference and not self.has_warned_about_not_being_optimized_for_inference:
+            logger.warning(
+                "Model is not optimized for inference. "
+                "Latency may be higher than expected. "
+                "You can optimize the model for inference by calling model.optimize_for_inference()."
+            )
+            self.has_warned_about_not_being_optimized_for_inference = True
+
+            self.model.model.eval()
 
         if not isinstance(images, list):
             images = [images]
@@ -196,7 +223,12 @@ class RFDETR:
         batch_tensor = torch.stack(processed_images)
 
         with torch.inference_mode():
-            predictions = self.model.model(batch_tensor)
+            predictions = self.model.model(batch_tensor) if not self.is_optimized_for_inference else self.model.inference_model(batch_tensor)
+            if isinstance(predictions, tuple):
+                predictions = {
+                    "pred_logits": predictions[1],
+                    "pred_boxes": predictions[0]
+                }
             target_sizes = torch.tensor(orig_sizes, device=self.model.device)
             results = self.model.postprocessors["bbox"](predictions, target_sizes=target_sizes)
 
