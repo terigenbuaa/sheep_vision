@@ -36,8 +36,11 @@ class RFDETR:
         self.model = self.get_model(self.model_config)
         self.callbacks = defaultdict(list)
 
-        self.is_optimized_for_inference = False
-        self.has_warned_about_not_being_optimized_for_inference = False
+        self._is_optimized_for_inference = False
+        self._has_warned_about_not_being_optimized_for_inference = False
+        self._optimized_has_been_compiled = False
+        self._optimized_batch_size = None
+        self._optimized_resolution = None
 
     def maybe_download_pretrain_weights(self):
         download_pretrain_weights(self.model_config.pretrain_weights)
@@ -49,18 +52,21 @@ class RFDETR:
         config = self.get_train_config(**kwargs)
         self.train_from_config(config, **kwargs)
     
-    def optimize_for_inference(self, compile=True):
+    def optimize_for_inference(self, compile=True, batch_size=1):
         self.model.inference_model = deepcopy(self.model.model)
         self.model.inference_model.eval()
         self.model.inference_model.export()
 
+        self._optimized_resolution = self.model.resolution
+        self._is_optimized_for_inference = True
+
         if compile:
             self.model.inference_model = torch.jit.trace(
                 self.model.inference_model,
-                torch.randn(1, 3, self.model.resolution, self.model.resolution, device=self.model.device)
+                torch.randn(batch_size, 3, self.model.resolution, self.model.resolution, device=self.model.device)
             )
-
-        self.is_optimized_for_inference = True
+            self._optimized_has_been_compiled = True
+            self._optimized_batch_size = batch_size
     
     def export(self, **kwargs):
         self.model.export(**kwargs)
@@ -175,13 +181,13 @@ class RFDETR:
                 objects, each containing bounding box coordinates, confidence scores,
                 and class IDs.
         """
-        if not self.is_optimized_for_inference and not self.has_warned_about_not_being_optimized_for_inference:
+        if not self._is_optimized_for_inference and not self._has_warned_about_not_being_optimized_for_inference:
             logger.warning(
                 "Model is not optimized for inference. "
                 "Latency may be higher than expected. "
                 "You can optimize the model for inference by calling model.optimize_for_inference()."
             )
-            self.has_warned_about_not_being_optimized_for_inference = True
+            self._has_warned_about_not_being_optimized_for_inference = True
 
             self.model.model.eval()
 
@@ -222,8 +228,16 @@ class RFDETR:
 
         batch_tensor = torch.stack(processed_images)
 
+        if self._is_optimized_for_inference:
+            if self._optimized_resolution != batch_tensor.shape[2]:
+                # this could happen if someone manually changes self.model.resolution after optimizing the model
+                raise ValueError(f"Resolution mismatch. Model was optimized for resolution {self._optimized_resolution}, but got {batch_tensor.shape[2]}.")
+            if self._optimized_has_been_compiled:
+                if self._optimized_batch_size != batch_tensor.shape[0]:
+                    raise ValueError(f"Batch size mismatch. Optimized model was compiled for batch size {self._optimized_batch_size}, but got {batch_tensor.shape[0]}.")
+
         with torch.inference_mode():
-            predictions = self.model.model(batch_tensor) if not self.is_optimized_for_inference else self.model.inference_model(batch_tensor)
+            predictions = self.model.model(batch_tensor) if not self._is_optimized_for_inference else self.model.inference_model(batch_tensor)
             if isinstance(predictions, tuple):
                 predictions = {
                     "pred_logits": predictions[1],
