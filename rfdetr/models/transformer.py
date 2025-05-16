@@ -23,7 +23,6 @@ import torch
 import torch.nn.functional as F
 from torch import nn, Tensor
 
-from rfdetr.models.attention import MultiheadAttention
 from rfdetr.models.ops.modules import MSDeformAttn
 
 class MLP(nn.Module):
