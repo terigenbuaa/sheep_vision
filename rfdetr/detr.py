@@ -18,7 +18,10 @@ import torch
 import torchvision.transforms.functional as F
 from PIL import Image
 
-torch.set_float32_matmul_precision('high')
+try:
+    torch.set_float32_matmul_precision('high')
+except:
+    pass
 
 from rfdetr.config import RFDETRBaseConfig, RFDETRLargeConfig, TrainConfig, ModelConfig
 from rfdetr.main import Model, download_pretrain_weights
