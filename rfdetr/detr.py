@@ -42,6 +42,7 @@ class RFDETR:
         self._optimized_has_been_compiled = False
         self._optimized_batch_size = None
         self._optimized_resolution = None
+        self._optimized_dtype = None
 
     def maybe_download_pretrain_weights(self):
         download_pretrain_weights(self.model_config.pretrain_weights)
@@ -53,7 +54,9 @@ class RFDETR:
         config = self.get_train_config(**kwargs)
         self.train_from_config(config, **kwargs)
     
-    def optimize_for_inference(self, compile=True, batch_size=1):
+    def optimize_for_inference(self, compile=True, batch_size=1, dtype=torch.float32):
+        self.remove_optimized_model()
+
         self.model.inference_model = deepcopy(self.model.model)
         self.model.inference_model.eval()
         self.model.inference_model.export()
@@ -61,10 +64,17 @@ class RFDETR:
         self._optimized_resolution = self.model.resolution
         self._is_optimized_for_inference = True
 
+        self.model.inference_model = self.model.inference_model.to(dtype=dtype)
+        self._optimized_dtype = dtype
+
         if compile:
             self.model.inference_model = torch.jit.trace(
                 self.model.inference_model,
-                torch.randn(batch_size, 3, self.model.resolution, self.model.resolution, device=self.model.device)
+                torch.randn(
+                    batch_size, 3, self.model.resolution, self.model.resolution, 
+                    device=self.model.device,
+                    dtype=dtype
+                )
             )
             self._optimized_has_been_compiled = True
             self._optimized_batch_size = batch_size
@@ -75,6 +85,7 @@ class RFDETR:
         self._optimized_has_been_compiled = False
         self._optimized_batch_size = None
         self._optimized_resolution = None
+        self._optimized_half = False
     
     def export(self, **kwargs):
         self.model.export(**kwargs)
@@ -253,7 +264,10 @@ class RFDETR:
                                      "by calling model.optimize_for_inference(batch_size=<new_batch_size>).")
 
         with torch.inference_mode():
-            predictions = self.model.model(batch_tensor) if not self._is_optimized_for_inference else self.model.inference_model(batch_tensor)
+            if self._is_optimized_for_inference:
+                predictions = self.model.inference_model(batch_tensor.to(dtype=self._optimized_dtype))
+            else:
+                predictions = self.model.model(batch_tensor)
             if isinstance(predictions, tuple):
                 predictions = {
                     "pred_logits": predictions[1],
@@ -274,8 +288,8 @@ class RFDETR:
             boxes = boxes[keep]
 
             detections = sv.Detections(
-                xyxy=boxes.cpu().numpy(),
-                confidence=scores.cpu().numpy(),
+                xyxy=boxes.float().cpu().numpy(),
+                confidence=scores.float().cpu().numpy(),
                 class_id=labels.cpu().numpy(),
             )
             detections_list.append(detections)
