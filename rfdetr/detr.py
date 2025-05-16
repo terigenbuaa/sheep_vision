@@ -36,6 +36,7 @@ class RFDETR:
         self.model = self.get_model(self.model_config)
         self.callbacks = defaultdict(list)
 
+        self.model.inference_model = None
         self._is_optimized_for_inference = False
         self._has_warned_about_not_being_optimized_for_inference = False
         self._optimized_has_been_compiled = False
@@ -67,6 +68,13 @@ class RFDETR:
             )
             self._optimized_has_been_compiled = True
             self._optimized_batch_size = batch_size
+    
+    def remove_optimized_model(self):
+        self.model.inference_model = None
+        self._is_optimized_for_inference = False
+        self._optimized_has_been_compiled = False
+        self._optimized_batch_size = None
+        self._optimized_resolution = None
     
     def export(self, **kwargs):
         self.model.export(**kwargs)
@@ -231,10 +239,18 @@ class RFDETR:
         if self._is_optimized_for_inference:
             if self._optimized_resolution != batch_tensor.shape[2]:
                 # this could happen if someone manually changes self.model.resolution after optimizing the model
-                raise ValueError(f"Resolution mismatch. Model was optimized for resolution {self._optimized_resolution}, but got {batch_tensor.shape[2]}.")
+                raise ValueError(f"Resolution mismatch. "
+                                 f"Model was optimized for resolution {self._optimized_resolution}, "
+                                 f"but got {batch_tensor.shape[2]}. "
+                                 "You can explicitly remove the optimized model by calling model.remove_optimized_model().")
             if self._optimized_has_been_compiled:
                 if self._optimized_batch_size != batch_tensor.shape[0]:
-                    raise ValueError(f"Batch size mismatch. Optimized model was compiled for batch size {self._optimized_batch_size}, but got {batch_tensor.shape[0]}.")
+                    raise ValueError(f"Batch size mismatch. "
+                                     f"Optimized model was compiled for batch size {self._optimized_batch_size}, "
+                                     f"but got {batch_tensor.shape[0]}. "
+                                     "You can explicitly remove the optimized model by calling model.remove_optimized_model(). "
+                                     "Alternatively, you can recompile the optimized model for a different batch size "
+                                     "by calling model.optimize_for_inference(batch_size=<new_batch_size>).")
 
         with torch.inference_mode():
             predictions = self.model.model(batch_tensor) if not self._is_optimized_for_inference else self.model.inference_model(batch_tensor)
