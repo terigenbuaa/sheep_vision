@@ -230,6 +230,14 @@ def coco_extended_metrics(coco_eval):
             "precision": float(prec_k),
             "recall":    float(rec_k),
         })
+    
+    per_class.append({
+        "class": "all",
+        "map@50:95": float(map_50_95),
+        "map@50":    float(map_50),
+        "precision": float(macro_precision),
+        "recall":    float(macro_recall),
+    })
 
     return {"class_map": per_class, "map": map_50, "precision": macro_precision, "recall": macro_recall}
 
