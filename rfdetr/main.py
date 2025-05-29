@@ -357,7 +357,6 @@ class Model:
                 test_stats, coco_evaluator = evaluate(
                     model, criterion, postprocessors, data_loader_val, base_ds, device, args=args
                 )
-            print(test_stats)
             map_regular = test_stats["coco_eval_bbox"][0]
             _isbest = best_map_holder.update(map_regular, epoch, is_ema=False)
             if _isbest:
@@ -444,7 +443,6 @@ class Model:
             utils.strip_checkpoint(output_dir / 'checkpoint_best_total.pth')
         
             best_map_5095 = max(best_map_5095, best_map_ema_5095)
-            print("TEST STATS: ", test_stats)
             if best_is_ema:
                 results = ema_test_stats["results_json"]
             else:
