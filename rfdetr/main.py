@@ -357,8 +357,8 @@ class Model:
                 test_stats, coco_evaluator = evaluate(
                     model, criterion, postprocessors, data_loader_val, base_ds, device, args=args
                 )
-            
-            map_regular = test_stats['coco_eval_bbox'][0]
+            print(test_stats)
+            map_regular = test_stats["coco_eval_bbox"][0]
             _isbest = best_map_holder.update(map_regular, epoch, is_ema=False)
             if _isbest:
                 best_map_5095 = max(best_map_5095, map_regular)
@@ -381,7 +381,7 @@ class Model:
                     self.ema_m.module, criterion, postprocessors, data_loader_val, base_ds, device, args=args
                 )
                 log_stats.update({f'ema_test_{k}': v for k,v in ema_test_stats.items()})
-                map_ema = ema_test_stats['coco_eval_bbox'][0]
+                map_ema = ema_test_stats["coco_eval_bbox"][0]
                 best_map_ema_5095 = max(best_map_ema_5095, map_ema)
                 _isbest = best_map_holder.update(map_ema, epoch, is_ema=True)
                 if _isbest:
@@ -444,20 +444,14 @@ class Model:
             utils.strip_checkpoint(output_dir / 'checkpoint_best_total.pth')
         
             best_map_5095 = max(best_map_5095, best_map_ema_5095)
-            best_map_50 = max(best_map_50, best_map_ema_50)
+            print("TEST STATS: ", test_stats)
+            if best_is_ema:
+                results = ema_test_stats["results_json"]
+            else:
+                results = test_stats["results_json"]
 
-            results_json = {
-                "map95": best_map_5095,
-                "map50": best_map_50,
-                "class": "all"
-            }
-            results = {
-                "class_map": {
-                    "valid": [
-                        results_json
-                    ]
-                }
-            }
+            class_map = results["class_map"]
+            results["class_map"] = {"valid": class_map}
             with open(output_dir / "results.json", "w") as f:
                 json.dump(results, f)
 
