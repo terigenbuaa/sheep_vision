@@ -166,81 +166,77 @@ def train_one_epoch(
     print("Averaged stats:", metric_logger)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
+
 def coco_extended_metrics(coco_eval):
     """
-    Return a dict with overall and per-class metrics from a pycocotools COCOeval object.
-
-    Requires   coco_eval.evaluate(); coco_eval.accumulate()   to have been run.
-
-    overall:
-        - map_50_95   (stats[0])
-        - map_50      (stats[1])
-        - precision   (macro) at best-F1 IoU 0.50
-        - recall      (macro) at best-F1 IoU 0.50
-        - f1          (macro) at that point
-        - score_thr   (mean score cut-off that produces the P/R pair)
-
-    per_class:
-        {class_name or catId: {map_50_95, map_50, precision, recall}}
-        precision / recall reported at the *same* F1-optimal recall index.
+    Safe version: ignores the –1 sentinel entries so precision/F1 never explode.
     """
-    iou_thrs   = coco_eval.params.iouThrs
-    rec_thrs   = coco_eval.params.recThrs
-    iou50_idx  = int(np.argwhere(np.isclose(iou_thrs, 0.50)))
-    area_idx   = 0
-    maxdet_idx = 2
-    K          = len(coco_eval.params.catIds)
+
+    iou_thrs, rec_thrs = coco_eval.params.iouThrs, coco_eval.params.recThrs
+    iou50_idx, area_idx, maxdet_idx = (
+        int(np.argwhere(np.isclose(iou_thrs, 0.50))), 0, 2)
 
     P = coco_eval.eval["precision"]
     S = coco_eval.eval["scores"]
 
-    prec_mat = P[iou50_idx, :, :, area_idx, maxdet_idx]
-    f1_mat   = 2 * prec_mat * rec_thrs[:, None] / (prec_mat + rec_thrs[:, None] + 1e-32)
-    f1_macro = f1_mat.mean(axis=1)
+    prec_raw = P[iou50_idx, :, :, area_idx, maxdet_idx]
 
-    best_j = int(f1_macro.argmax())
+    prec = prec_raw.copy().astype(float)
+    prec[prec < 0] = np.nan
 
-    macro_precision = float(prec_mat[best_j].mean())
+    f1_cls   = 2 * prec * rec_thrs[:, None] / (prec + rec_thrs[:, None])
+    f1_macro = np.nanmean(f1_cls, axis=1)
+
+    best_j   = int(f1_macro.argmax())
+
+    macro_precision = float(np.nanmean(prec[best_j]))
     macro_recall    = float(rec_thrs[best_j])
     macro_f1        = float(f1_macro[best_j])
-    score_thr       = float(S[iou50_idx, best_j, :, area_idx, maxdet_idx].mean())
 
-    map_50_95 = float(coco_eval.stats[0])
-    map_50    = float(coco_eval.stats[1])
+    score_vec = S[iou50_idx, best_j, :, area_idx, maxdet_idx].astype(float)
+    score_vec[prec_raw[best_j] < 0] = np.nan
+    score_thr = float(np.nanmean(score_vec))
+
+    map_50_95, map_50 = float(coco_eval.stats[0]), float(coco_eval.stats[1])
 
     per_class = []
     cat_ids = coco_eval.params.catIds
-    cat_id_to_name = {cat["id"]: cat["name"] for cat in coco_eval.cocoGt.loadCats(cat_ids)}
-    for k, cat_id in enumerate(cat_ids):
+    cat_id_to_name = {c["id"]: c["name"] for c in coco_eval.cocoGt.loadCats(cat_ids)}
+    for k, cid in enumerate(cat_ids):
         p_slice = P[:, :, k, area_idx, maxdet_idx]
         valid   = p_slice > -1
         ap_50_95 = float(p_slice[valid].mean()) if valid.any() else float("nan")
+        ap_50    = float(p_slice[iou50_idx][p_slice[iou50_idx] > -1].mean()) if (p_slice[iou50_idx] > -1).any() else float("nan")
 
-        valid50 = p_slice[iou50_idx] > -1
-        ap_50   = float(p_slice[iou50_idx][valid50].mean()) if valid50.any() else float("nan")
+        pc = float(prec[best_j, k]) if prec_raw[best_j, k] > -1 else float("nan")
+        rc = macro_recall
 
-        prec_k = float(prec_mat[best_j, k]) if prec_mat[best_j, k] > -1 else float("nan")
-        rec_k  = float(rec_thrs[best_j])
+        #Doing to this to filter out dataset class
+        if np.isnan(ap_50_95) or np.isnan(ap_50) or np.isnan(pc) or np.isnan(rc):
+            continue
 
-        name = cat_id_to_name[int(cat_id)]
         per_class.append({
-            "class": str(name),
-            "map@50:95": float(ap_50_95),
-            "map@50":    float(ap_50),
-            "precision": float(prec_k),
-            "recall":    float(rec_k),
+            "class"      : cat_id_to_name[int(cid)],
+            "map@50:95"  : ap_50_95,
+            "map@50"     : ap_50,
+            "precision"  : pc,
+            "recall"     : rc,
         })
-    
+
     per_class.append({
-        "class": "all",
-        "map@50:95": float(map_50_95),
-        "map@50":    float(map_50),
-        "precision": float(macro_precision),
-        "recall":    float(macro_recall),
+        "class"     : "all",
+        "map@50:95" : map_50_95,
+        "map@50"    : map_50,
+        "precision" : macro_precision,
+        "recall"    : macro_recall,
     })
 
-    return {"class_map": per_class, "map": map_50, "precision": macro_precision, "recall": macro_recall}
-
+    return {
+        "class_map": per_class,
+        "map"      : map_50,
+        "precision": macro_precision,
+        "recall"   : macro_recall
+    }
 
 def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, args=None):
     model.eval()
@@ -324,6 +320,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, arg
     stats = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
     if coco_evaluator is not None:
         results_json = coco_extended_metrics(coco_evaluator.coco_eval["bbox"])
+        print("Results JSON:", results_json)
         stats["results_json"] = results_json
         if "bbox" in postprocessors.keys():
             stats["coco_eval_bbox"] = coco_evaluator.coco_eval["bbox"].stats.tolist()
