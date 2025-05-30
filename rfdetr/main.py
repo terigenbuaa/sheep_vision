@@ -193,6 +193,7 @@ class Model:
 
         dataset_train = build_dataset(image_set='train', args=args, resolution=args.resolution)
         dataset_val = build_dataset(image_set='val', args=args, resolution=args.resolution)
+        dataset_test = build_dataset(image_set='test', args=args, resolution=args.resolution)
 
         # for cosine annealing, calculate total training steps and warmup steps
         total_batch_size_for_lr = args.batch_size * utils.get_world_size() * args.grad_accum_steps
@@ -218,9 +219,11 @@ class Model:
         if args.distributed:
             sampler_train = DistributedSampler(dataset_train)
             sampler_val = DistributedSampler(dataset_val, shuffle=False)
+            sampler_test = DistributedSampler(dataset_test, shuffle=False)
         else:
             sampler_train = torch.utils.data.RandomSampler(dataset_train)
             sampler_val = torch.utils.data.SequentialSampler(dataset_val)
+            sampler_test = torch.utils.data.SequentialSampler(dataset_test)
 
         effective_batch_size = args.batch_size * args.grad_accum_steps
         min_batches = kwargs.get('min_batches', 5)
@@ -253,9 +256,12 @@ class Model:
         data_loader_val = DataLoader(dataset_val, args.batch_size, sampler=sampler_val,
                                     drop_last=False, collate_fn=utils.collate_fn, 
                                     num_workers=args.num_workers)
+        data_loader_test = DataLoader(dataset_test, args.batch_size, sampler=sampler_test,
+                                    drop_last=False, collate_fn=utils.collate_fn, 
+                                    num_workers=args.num_workers)
 
         base_ds = get_coco_api_from_dataset(dataset_val)
-
+        base_ds_test = get_coco_api_from_dataset(dataset_test)
         if args.use_ema:
             self.ema_m = ModelEma(model_without_ddp, decay=args.ema_decay, tau=args.ema_tau)
         else:
@@ -457,10 +463,23 @@ class Model:
             total_time_str = str(datetime.timedelta(seconds=int(total_time)))
             print('Training time {}'.format(total_time_str))
             print('Results saved to {}'.format(output_dir / "results.json"))
+            
         
         if best_is_ema:
             self.model = self.ema_m.module
         self.model.eval()
+
+
+        if args.run_test:
+            test_stats, _ = evaluate(
+                model, criterion, postprocessors, data_loader_test, base_ds_test, device, args=args
+            )
+            with open(output_dir / "results.json", "r") as f:
+                results = json.load(f)
+            test_metrics = test_stats["results_json"]["class_map"]
+            results["class_map"]["test"] = test_metrics
+            with open(output_dir / "results.json", "w") as f:
+                json.dump(results, f)
 
         for callback in callbacks["on_train_end"]:
             callback()
