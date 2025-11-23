@@ -272,9 +272,32 @@ IoU匹配
 - `cv2`: OpenCV 图像处理
 - `numpy`: 数值计算
 
+## 🔄 改进版本
+
+### simple_tracker_improved.py
+
+针对**目标交叉时ID交换问题**的改进版本，主要改进包括：
+
+1. ✅ **卡尔曼滤波运动预测** - 预测目标下一帧位置
+2. ✅ **匈牙利算法** - 全局最优匹配，替代贪心算法
+3. ✅ **多特征融合** - IoU + 运动信息综合匹配
+4. ✅ **轨迹历史** - 保存历史位置和速度信息
+5. ✅ **速度可视化** - 显示目标运动方向
+
+**使用方法**：
+```bash
+python rfdetr_deepsort/simple_tracker_improved.py \
+    --input "rfdetr_deepsort/test.mp4" \
+    --confidence 0.5 \
+    --save
+```
+
+详细改进说明请参考 [IMPROVEMENTS.md](IMPROVEMENTS.md)
+
 ---
 
 **版本**: 1.0.0  
+**改进版本**: 2.0.0 (simple_tracker_improved.py)  
 **作者**: RF-DETR Team  
 **许可证**: Apache License 2.0
 
