@@ -981,6 +981,12 @@ def populate_args(
     early_stopping_min_delta=0.001,
     early_stopping_use_ema=False,
     gradient_checkpointing=False,
+    # Segmentation parameters
+    segmentation_head=False,
+    mask_downsample_ratio=4,
+    mask_point_sample_ratio=16,
+    mask_ce_loss_coef=5.0,
+    mask_dice_loss_coef=5.0,
     # Additional
     subcommand=None,
     **extra_kwargs  # To handle any unexpected arguments
@@ -1081,6 +1087,11 @@ def populate_args(
         early_stopping_min_delta=early_stopping_min_delta,
         early_stopping_use_ema=early_stopping_use_ema,
         gradient_checkpointing=gradient_checkpointing,
+        segmentation_head=segmentation_head,
+        mask_downsample_ratio=mask_downsample_ratio,
+        mask_point_sample_ratio=mask_point_sample_ratio,
+        mask_ce_loss_coef=mask_ce_loss_coef,
+        mask_dice_loss_coef=mask_dice_loss_coef,
         **extra_kwargs
     )
     return args

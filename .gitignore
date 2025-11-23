@@ -178,5 +178,31 @@ cython_debug/
 # model artifacts
 rf-detr*
 output/*
+checkpoints/*.pth
+checkpoints/finetuned/*
+data/raw/*
+data/processed/*
 
 train_test.py
+
+# 不需要上传的文件和目录
+data_analyse/
+output/analysis_video__*/
+*.mp4
+*.jpg
+*.png
+*.xlsx
+*.csv
+*.json
+!rfdetr_deepsort/test.mp4
+
+# 不需要上传的文件和目录
+data_analyse/
+output/analysis_video__*/
+*.mp4
+*.jpg
+*.png
+*.xlsx
+*.csv
+*.json
+!rfdetr_deepsort/test.mp4
