@@ -277,17 +277,63 @@ def calculate_motion_cost(det_center, track_predicted_center, max_cost=100.0):
     return cost
 
 
+def detect_overlapping_detections(detections, overlap_threshold=0.5):
+    """
+    检测重叠的检测框
+    
+    Args:
+        detections: 检测结果列表，每个元素是 (bbox, class_id, confidence)
+        overlap_threshold: 重叠阈值，超过此值认为重叠
+    
+    Returns:
+        overlap_groups: 重叠组列表，每个组包含重叠的检测索引
+        overlap_mask: 布尔数组，标记哪些检测处于重叠状态
+    """
+    n = len(detections)
+    overlap_mask = np.zeros(n, dtype=bool)
+    overlap_groups = []
+    visited = set()
+    
+    for i in range(n):
+        if i in visited:
+            continue
+        
+        bbox_i = detections[i][0]
+        group = [i]
+        
+        for j in range(i + 1, n):
+            if j in visited:
+                continue
+            
+            bbox_j = detections[j][0]
+            iou_val = iou(bbox_i, bbox_j)
+            
+            if iou_val > overlap_threshold:
+                group.append(j)
+                visited.add(j)
+        
+        if len(group) > 1:
+            overlap_groups.append(group)
+            for idx in group:
+                overlap_mask[idx] = True
+    
+    return overlap_groups, overlap_mask
+
+
 def associate_detections_to_tracks_improved(
     detections, 
     tracks, 
     iou_threshold=0.3,
     motion_weight=0.3,
     iou_weight=0.7,
-    max_motion_distance=100.0
+    max_motion_distance=100.0,
+    overlap_threshold=0.5,
+    strict_overlap_threshold=0.6
 ):
     """
     改进的检测-轨迹关联算法
     使用多特征融合：IoU + 运动预测
+    添加重叠检测和处理机制
     
     Args:
         detections: 检测结果列表，每个元素是 (bbox, class_id, confidence)
@@ -296,17 +342,28 @@ def associate_detections_to_tracks_improved(
         motion_weight: 运动成本权重
         iou_weight: IoU成本权重
         max_motion_distance: 最大运动距离（用于归一化）
+        overlap_threshold: 重叠检测阈值
+        strict_overlap_threshold: 重叠时使用的更严格的IoU阈值
     
     Returns:
         matches: 匹配对 [(det_idx, track_idx), ...]
         unmatched_dets: 未匹配的检测索引
         unmatched_trks: 未匹配的轨迹索引
+        overlap_info: 重叠信息字典
     """
     if len(tracks) == 0:
-        return [], list(range(len(detections))), []
+        return [], list(range(len(detections))), [], {}
     
     if len(detections) == 0:
-        return [], [], list(range(len(tracks)))
+        return [], [], list(range(len(tracks))), {}
+    
+    # 检测重叠的检测框
+    overlap_groups, overlap_mask = detect_overlapping_detections(detections, overlap_threshold)
+    overlap_info = {
+        'groups': overlap_groups,
+        'mask': overlap_mask,
+        'has_overlap': len(overlap_groups) > 0
+    }
     
     # 计算成本矩阵
     cost_matrix = np.ones((len(detections), len(tracks))) * 1e6
@@ -329,8 +386,11 @@ def associate_detections_to_tracks_improved(
             # 综合成本
             total_cost = iou_weight * iou_cost + motion_weight * motion_cost
             
+            # 如果检测处于重叠状态，使用更严格的阈值
+            effective_iou_threshold = strict_overlap_threshold if overlap_mask[i] else iou_threshold
+            
             # 如果IoU太低，设置高成本
-            if iou_val < iou_threshold:
+            if iou_val < effective_iou_threshold:
                 total_cost = 1e6
             
             cost_matrix[i, j] = total_cost
@@ -370,9 +430,9 @@ def associate_detections_to_tracks_improved(
             if j not in used_trks:
                 unmatched_trks.append(j)
         
-        return matches, unmatched_dets, unmatched_trks
+        return matches, unmatched_dets, unmatched_trks, overlap_info
     
-    return [], list(range(len(detections))), list(range(len(tracks)))
+    return [], list(range(len(detections))), list(range(len(tracks))), overlap_info
 
 
 class ImprovedTracker:
@@ -453,7 +513,7 @@ class ImprovedTracker:
             track.predict()
         
         # 关联检测到轨迹（使用改进的算法）
-        matches, unmatched_dets, unmatched_trks = associate_detections_to_tracks_improved(
+        matches, unmatched_dets, unmatched_trks, overlap_info = associate_detections_to_tracks_improved(
             detections, self.tracks, self.iou_threshold
         )
         
@@ -465,9 +525,26 @@ class ImprovedTracker:
             if class_id is not None:
                 self.tracks[trk_idx].class_id = class_id
         
-        # 为未匹配的检测创建新轨迹
+        # 为未匹配的检测创建新轨迹（重叠时更保守）
         for det_idx in unmatched_dets:
             bbox, class_id, confidence = detections[det_idx]
+            
+            # 如果检测处于重叠状态，需要更严格的检查
+            if overlap_info['mask'][det_idx]:
+                # 检查是否与现有轨迹有较高的IoU（可能是误判的未匹配）
+                should_create = True
+                for track in self.tracks:
+                    if track.is_confirmed():
+                        iou_val = iou(bbox, track.bbox)
+                        # 如果与已确认轨迹有较高IoU，不创建新轨迹
+                        if iou_val > 0.4:  # 重叠时使用更宽松的阈值
+                            should_create = False
+                            break
+                
+                if not should_create:
+                    continue
+            
+            # 创建新轨迹
             new_track = ImprovedTrack(self.next_id, bbox, class_id, frame_id)
             self.tracks.append(new_track)
             self.next_id += 1

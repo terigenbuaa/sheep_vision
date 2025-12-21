@@ -276,13 +276,14 @@ IoU匹配
 
 ### simple_tracker_improved.py
 
-针对**目标交叉时ID交换问题**的改进版本，主要改进包括：
+针对**目标交叉和重叠时ID交换问题**的改进版本，主要改进包括：
 
 1. ✅ **卡尔曼滤波运动预测** - 预测目标下一帧位置
 2. ✅ **匈牙利算法** - 全局最优匹配，替代贪心算法
 3. ✅ **多特征融合** - IoU + 运动信息综合匹配
 4. ✅ **轨迹历史** - 保存历史位置和速度信息
 5. ✅ **速度可视化** - 显示目标运动方向
+6. ✅ **重叠检测和处理** - 检测重叠目标，使用更严格的匹配策略，避免ID快速增长
 
 **使用方法**：
 ```bash
@@ -292,7 +293,10 @@ python rfdetr_deepsort/simple_tracker_improved.py \
     --save
 ```
 
-详细改进说明请参考 [IMPROVEMENTS.md](IMPROVEMENTS.md)
+**详细文档**：
+- [IMPROVEMENTS.md](IMPROVEMENTS.md) - 改进说明和技术细节
+- [OVERLAP_HANDLING.md](OVERLAP_HANDLING.md) - 重叠处理机制说明
+- [COMPARISON.md](COMPARISON.md) - 版本对比指南
 
 ---
 
